@@ -7,6 +7,7 @@
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=jellydn.vscode-fff-gpui"><img src="https://img.shields.io/visual-studio-marketplace/v/jellydn.vscode-fff-gpui?label=VS%20Code" alt="VS Code Marketplace"></a>
   <a href="https://open-vsx.org/extension/jellydn/vscode-fff-gpui"><img src="https://img.shields.io/open-vsx/v/jellydn/vscode-fff-gpui?label=Open%20VSX" alt="Open VSX Registry"></a>
+  <a href="https://github.com/jellydn/vscode-fff-gpui/actions/workflows/publish.yml"><img src="https://github.com/jellydn/vscode-fff-gpui/actions/workflows/publish.yml/badge.svg" alt="Publish workflow"></a>
   <a href="https://github.com/jellydn/vscode-fff-gpui/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
 </p>
 
