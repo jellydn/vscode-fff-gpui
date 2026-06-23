@@ -5,38 +5,19 @@ on:
     branches:
       - main
 
-# 🪪 One-time Azure OIDC setup (run these commands once):
+# 🔑 One-time token setup:
 #
-#   # 1. Create App Registration + Service Principal
-#   APP_ID=$(az ad app create --display-name "vscode-fff-gpui-publisher" --query appId -o tsv)
-#   az ad sp create --id "$APP_ID" --query id -o tsv
+#   Open VSX Registry:
+#     Get your token at https://open-vsx.org/user-settings/tokens
+#     Store as GitHub secret: OPEN_VSX_TOKEN
 #
-#   # 2. Add federated credential (trust GitHub Actions via OIDC)
-#   az ad app federated-credential create --id "$APP_ID" \
-#     --parameters '{
-#       "name": "github-actions-publish",
-#       "issuer": "https://token.actions.githubusercontent.com",
-#       "subject": "repo:jellydn/vscode-fff-gpui:ref:refs/heads/main",
-#       "description": "OIDC trust for main-branch publish workflow",
-#       "audiences": ["api://AzureADTokenExchange"]
-#     }'
-#
-#   # 3. Get your tenant ID
-#   TENANT_ID=$(az account show --query tenantId -o tsv)
-#
-#   # 4. Add service principal to VS Code Marketplace publisher:
-#   #    Get the SP Object ID with: az ad sp show --id "$APP_ID" --query id -o tsv
-#   #    Then go to https://marketplace.visualstudio.com/manage/publishers/jellydn → Members
-#   #    → Add Member → paste the SP Object ID → Contributor → Save
-#
-#   # 5. Set GitHub Actions variables (repo Settings → Secrets and variables → Actions → Variables):
-#   #    - AZURE_CLIENT_ID = $APP_ID
-#   #    - AZURE_TENANT_ID = $TENANT_ID
-#
-# No Azure subscription needed — this uses Entra ID identity only.
+#   VS Code Marketplace:
+#     1. Sign into https://dev.azure.com/ with your publisher account
+#     2. Create a PAT with "Marketplace (Publish)" scope at
+#        https://dev.azure.com/ (User Settings → Personal Access Tokens)
+#     3. Store as GitHub secret: VS_MARKETPLACE_TOKEN
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -92,14 +73,9 @@ jobs:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           extensionFile: ${{ env.VSIX }}
 
-      - name: Azure login (Entra ID OIDC)
-        if: steps.version-check.outputs.changed == 'true'
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          allow-no-subscriptions: true
-
       - name: Publish to VS Code Marketplace
         if: steps.version-check.outputs.changed == 'true'
-        run: npx vsce publish --packagePath ${{ env.VSIX }} --azure-credential
+        uses: HaaLeo/publish-vscode-extension@v1
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          extensionFile: ${{ env.VSIX }}

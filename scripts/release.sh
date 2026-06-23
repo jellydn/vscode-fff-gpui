@@ -6,18 +6,18 @@ set -euo pipefail
 #
 # ── Prerequisites ─────────────────────────────────────
 #
-#   VS Code Marketplace (Entra ID via Azure CLI):
-#     1. Install Azure CLI:  brew install azure-cli
-#     2. Log in:             az login
-#     3. Ensure you have a publisher at https://marketplace.visualstudio.com/manage
-#     4. Requires vsce >= 2.26.1 (already a devDependency)
+#   VS Code Marketplace:
+#     1. Sign into https://dev.azure.com/ with your publisher account
+#     2. Create a PAT with "Marketplace (Publish)" scope at
+#        https://dev.azure.com/ (User Settings → Personal Access Tokens)
+#     3. Set:  export VS_MARKETPLACE_TOKEN="your-pat-here"
 #
 #   Open VSX Registry:
 #     1. Go to https://open-vsx.org/user-settings/tokens
 #     2. Create an access token (requires GitHub login)
 #     3. Set:  export OPEN_VSX_TOKEN="your-token-here"
 #
-#   Tip: add OPEN_VSX_TOKEN to ~/.bashrc or ~/.zshrc so it persists.
+#   Tip: add both tokens to ~/.bashrc or ~/.zshrc so they persist.
 #
 # Usage:
 #   ./scripts/release.sh              # full release to both registries
@@ -38,27 +38,27 @@ if $SETUP_ONLY; then
   echo "  🔑 Setup Guide"
   echo "══════════════════════════════════════════"
   echo ""
-  echo "VS Code Marketplace uses Microsoft Entra ID authentication."
-  echo "No PAT needed:"
-  echo ""
-  echo "  One-time setup:"
-  echo "  1. Install:    brew install azure-cli"
-  echo "  2. Log in:     az login"
-  echo "  3. Init org:   Sign in at https://dev.azure.com/ and create a free org (e.g. jellydn)"
-  echo "  4. Get ID:     az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me --resource 499b84ac-1321-427f-aa17-267ca6975798"
-  echo "  5. Add member: https://marketplace.visualstudio.com/manage/publishers → jellydn → Members → Add ID (Contributor)"
-  echo "  3. Verify:   az account show"
+  echo "VS Code Marketplace needs a Personal Access Token (PAT):"
+  echo "  1. Sign in at https://dev.azure.com/"
+  echo "  2. User Settings → Personal Access Tokens → New Token"
+  echo "  3. Scope: Marketplace (Publish)"
+  echo "  4. export VS_MARKETPLACE_TOKEN=\"your-pat-here\""
   echo ""
   echo "Open VSX Registry needs an access token:"
-  echo "  URL: https://open-vsx.org/user-settings/tokens"
-  echo "  Then: export OPEN_VSX_TOKEN=\"your-token-here\""
+  echo "  1. Go to https://open-vsx.org/user-settings/tokens"
+  echo "  2. Create a new access token"
+  echo "  3. export OPEN_VSX_TOKEN=\"your-token-here\""
   echo ""
-  echo "Opening token page in browser..."
 
+  echo "Opening token pages in browser..."
   if command -v open &>/dev/null; then
     open "https://open-vsx.org/user-settings/tokens"
+    open "https://dev.azure.com/"
   elif command -v xdg-open &>/dev/null; then
     xdg-open "https://open-vsx.org/user-settings/tokens"
+    xdg-open "https://dev.azure.com/"
+  else
+    echo "(could not auto-open browser — open the URLs above)"
   fi
 
   echo ""
@@ -113,27 +113,30 @@ if $DRY_RUN; then
   echo ""
   echo "✅ Dry run complete. VSIX is ready: $VSIX"
   echo ""
-  echo "   Before publishing:"
-  echo "     VS Code:  az login (Entra ID — no PAT needed)"
-  echo "     Open VSX: https://open-vsx.org/user-settings/tokens"
+  echo "   Before publishing, set up tokens:"
+  echo "     ./scripts/release.sh --setup"
   echo ""
-  echo "   Then run:"
-  echo "     export OPEN_VSX_TOKEN=\"your-token-here\""
+  echo "   Or publish manually:"
+  echo "     export OPEN_VSX_TOKEN=\"...\""
+  echo "     export VS_MARKETPLACE_TOKEN=\"...\""
   echo "     npx ovsx publish $VSIX --pat \"\$OPEN_VSX_TOKEN\""
-  echo "     npx vsce publish --packagePath $VSIX --azure-credential"
-  echo ""
-  echo "   Or just run the full release:"
-  echo "     ./scripts/release.sh"
+  echo "     npx vsce publish --packagePath $VSIX -p \"\$VS_MARKETPLACE_TOKEN\""
   exit 0
 fi
 
-# Check Open VSX token
+# Check tokens
 if [[ -z "${OPEN_VSX_TOKEN:-}" ]]; then
   echo ""
   echo "❌ OPEN_VSX_TOKEN is not set"
   echo "   Get it at: https://open-vsx.org/user-settings/tokens"
+  echo "   Or run: ./scripts/release.sh --setup"
+  exit 1
+fi
+
+if [[ -z "${VS_MARKETPLACE_TOKEN:-}" ]]; then
   echo ""
-  echo "   Then: export OPEN_VSX_TOKEN=\"your-token-here\""
+  echo "❌ VS_MARKETPLACE_TOKEN is not set"
+  echo "   Get it at: https://dev.azure.com/ (User Settings → Personal Access Tokens)"
   echo "   Or run: ./scripts/release.sh --setup"
   exit 1
 fi
@@ -144,22 +147,17 @@ echo "🚀 Publishing to Open VSX Registry…"
 npx ovsx publish "$VSIX" --pat "$OPEN_VSX_TOKEN"
 echo "   ✅ Open VSX published"
 
-# VS Code Marketplace (Entra ID via Azure CLI)
+# VS Code Marketplace
 echo ""
 echo "🚀 Publishing to VS Code Marketplace…"
-if ! az account show &>/dev/null; then
-  echo ""
-  echo "❌ Not logged into Azure. Run: az login"
-  echo "   Or: ./scripts/release.sh --setup"
-  exit 1
-fi
-npx vsce publish --packagePath "$VSIX" --azure-credential
+npx vsce publish --packagePath "$VSIX" -p "$VS_MARKETPLACE_TOKEN"
 echo "   ✅ VS Code Marketplace published"
 
 # ── Done ───────────────────────────────────────────────
 
 echo ""
 echo "══════════════════════════════════════════"
-echo "  ✅ Release complete!"echo "     Open VSX:  https://open-vsx.org/extension/jellydn/vscode-fff-gpui"
-     echo "     VS Code:   https://marketplace.visualstudio.com/items?itemName=jellydn.vscode-fff-gpui"
+echo "  ✅ Release complete!"
+echo "     Open VSX:  https://open-vsx.org/extension/jellydn/vscode-fff-gpui"
+echo "     VS Code:   https://marketplace.visualstudio.com/items?itemName=jellydn.vscode-fff-gpui"
 echo "══════════════════════════════════════════"

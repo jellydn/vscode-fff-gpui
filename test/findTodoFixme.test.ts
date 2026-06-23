@@ -19,6 +19,7 @@ const {
   openTextDocumentMock: vi.fn(),
   showTextDocumentMock: vi.fn(),
   fsMock: {
+    statSync: vi.fn(),
     mkdirSync: vi.fn(),
     linkSync: vi.fn(),
     symlinkSync: vi.fn(),
@@ -73,6 +74,7 @@ describe('findTodoFixme', () => {
     vi.clearAllMocks()
     getSocketPathMock.mockReturnValue('')
     sendCommandMock.mockResolvedValue({ paths: [] })
+    fsMock.statSync.mockReturnValue({ isDirectory: () => true })
     execMock.mockImplementation((cmd: string, options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
@@ -101,7 +103,7 @@ describe('findTodoFixme', () => {
 
     // Verify overlay folder creation
     expect(fsMock.mkdirSync).toHaveBeenCalledWith(
-      expect.stringContaining(path.join('/mock/workspace', '.git', 'fff-gpui-temp-')),
+      expect.stringContaining(path.join('/mock/workspace', '.git', '.fff-gpui-temp-')),
       { recursive: true },
     )
 
@@ -109,7 +111,7 @@ describe('findTodoFixme', () => {
     expect(sendCommandMock).toHaveBeenCalledWith(
       {
         cmd: 'open_path',
-        path: expect.stringContaining(path.join('/mock/workspace', '.git', 'fff-gpui-temp-')),
+        path: expect.stringContaining(path.join('/mock/workspace', '.git', '.fff-gpui-temp-')),
         in_grep: true,
       },
       undefined,
@@ -123,7 +125,7 @@ describe('findTodoFixme', () => {
 
     // Verify cleanup was run
     expect(fsMock.rmSync).toHaveBeenCalledWith(
-      expect.stringContaining(path.join('/mock/workspace', '.git', 'fff-gpui-temp-')),
+      expect.stringContaining(path.join('/mock/workspace', '.git', '.fff-gpui-temp-')),
       { recursive: true, force: true },
     )
   })
@@ -157,5 +159,28 @@ describe('findTodoFixme', () => {
 
     expect(showInformationMessageMock).toHaveBeenCalledWith('No TODO/FIXME comments found.')
     expect(sendCommandMock).not.toHaveBeenCalled()
+  })
+
+  it('falls back to workspace root when .git is not a directory', async () => {
+    fsMock.statSync.mockImplementation((p: string) => {
+      if (p.endsWith('.git')) {
+        return { isDirectory: () => false }
+      }
+      return { isDirectory: () => true }
+    })
+
+    sendCommandMock.mockImplementation(async (command) => ({
+      paths: [{ path: path.join(command.path, 'src/client.ts') }],
+    }))
+
+    openTextDocumentMock.mockResolvedValue({ uri: { fsPath: '/mock/workspace/src/client.ts' } })
+
+    await findTodoFixme()
+
+    // Verify temp folder path contains fff-gpui-temp but NOT inside .git
+    expect(fsMock.mkdirSync).toHaveBeenCalledWith(
+      expect.stringMatching(/\/mock\/workspace\/\.fff-gpui-temp-[a-f0-9]+$/),
+      { recursive: true },
+    )
   })
 })

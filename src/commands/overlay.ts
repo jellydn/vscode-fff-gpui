@@ -10,7 +10,19 @@ export interface OverlayResult {
 
 export function createTempOverlay(workspaceRoot: string, files: string[]): OverlayResult {
   const uniqueId = crypto.randomBytes(8).toString('hex')
-  const tempDir = path.join(workspaceRoot, '.git', `fff-gpui-temp-${uniqueId}`)
+
+  let parentDir = workspaceRoot
+  const gitDir = path.join(workspaceRoot, '.git')
+  try {
+    const stat = fs.statSync(gitDir)
+    if (stat.isDirectory()) {
+      parentDir = gitDir
+    }
+  } catch (e) {
+    // If .git does not exist or is a file (e.g. worktree/submodule), use workspaceRoot
+  }
+
+  const tempDir = path.join(parentDir, `.fff-gpui-temp-${uniqueId}`)
 
   log(`Creating temporary overlay at: ${tempDir}`)
   fs.mkdirSync(tempDir, { recursive: true })
