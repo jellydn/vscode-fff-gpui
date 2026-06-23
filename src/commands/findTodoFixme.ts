@@ -1,4 +1,4 @@
-import { exec } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import * as vscode from 'vscode'
 import { sendCommand } from '../client'
@@ -7,23 +7,28 @@ import { log } from '../logger'
 import { openFiles } from './openFiles'
 import { createTempOverlay, resolveOverlayPaths } from './overlay'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 async function getTodoFiles(workspaceRoot: string): Promise<string[]> {
-  const pattern = '(TODO|FIXME|HACK|FIX):\\s'
   try {
-    const { stdout } = await execAsync(`rg -l --smart-case "${pattern}"`, {
-      cwd: workspaceRoot,
-    })
+    // ripgrep pattern with trailing whitespace match
+    const { stdout } = await execFileAsync(
+      'rg',
+      ['-l', '--smart-case', '(TODO|FIXME|HACK|FIX):\\s', '.'],
+      { cwd: workspaceRoot },
+    )
     return stdout.split('\n').filter(Boolean)
   } catch (rgErr) {
     log(`rg search failed or no matches found, falling back to git grep: ${rgErr}`)
     try {
       // Fallback searches tracked git files.
       // git grep supports -E (extended regex), -l (files with matches), and -i (case-insensitive)
-      const { stdout } = await execAsync(`git grep -l -i -E "${pattern}"`, {
-        cwd: workspaceRoot,
-      })
+      // We use [[:space:]] for POSIX ERE compatibility to match whitespace
+      const { stdout } = await execFileAsync(
+        'git',
+        ['grep', '-l', '-i', '-E', '(TODO|FIXME|HACK|FIX):[[:space:]]', '.'],
+        { cwd: workspaceRoot },
+      )
       return stdout.split('\n').filter(Boolean)
     } catch (gitErr) {
       log(`git grep search failed or no matches found: ${gitErr}`)

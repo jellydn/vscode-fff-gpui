@@ -1,4 +1,4 @@
-import { exec } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import * as vscode from 'vscode'
 import { sendCommand } from '../client'
@@ -7,7 +7,7 @@ import { log } from '../logger'
 import { openFiles } from './openFiles'
 import { createTempOverlay, resolveOverlayPaths } from './overlay'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 function unquoteGitFilename(filename: string): string {
   let res = filename.trim()
@@ -39,8 +39,8 @@ function parseGitStatusLine(line: string): string | null {
 async function getGitStatusFiles(workspaceRoot: string): Promise<string[]> {
   try {
     const [statusResult, untrackedResult] = await Promise.all([
-      execAsync('git status --porcelain', { cwd: workspaceRoot }),
-      execAsync('git ls-files --others --exclude-standard', { cwd: workspaceRoot }),
+      execFileAsync('git', ['status', '--porcelain'], { cwd: workspaceRoot }),
+      execFileAsync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: workspaceRoot }),
     ])
 
     const trackedFiles = statusResult.stdout

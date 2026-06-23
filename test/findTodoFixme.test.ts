@@ -2,7 +2,7 @@ import * as path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
-  execMock,
+  execFileMock,
   sendCommandMock,
   getSocketPathMock,
   showErrorMessageMock,
@@ -11,7 +11,7 @@ const {
   showTextDocumentMock,
   fsMock,
 } = vi.hoisted(() => ({
-  execMock: vi.fn(),
+  execFileMock: vi.fn(),
   sendCommandMock: vi.fn(),
   getSocketPathMock: vi.fn(),
   showErrorMessageMock: vi.fn(),
@@ -29,7 +29,7 @@ const {
 }))
 
 vi.mock('node:child_process', () => ({
-  exec: execMock,
+  execFile: execFileMock,
 }))
 
 vi.mock('node:fs', () => fsMock)
@@ -75,17 +75,17 @@ describe('findTodoFixme', () => {
     getSocketPathMock.mockReturnValue('')
     sendCommandMock.mockResolvedValue({ paths: [] })
     fsMock.statSync.mockReturnValue({ isDirectory: () => true })
-    execMock.mockImplementation((cmd: string, options: any, callback: any) => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
-      if (cmd.startsWith('rg ')) {
+      if (file === 'rg') {
         stdout = 'src/extension.ts\nsrc/client.ts\n'
       }
       cb(null, { stdout, stderr: '' })
     })
   })
 
-  it('runs rg command to get files with TODO, creates overlay, spawns fff-gpui with in_grep: true, and cleans up', async () => {
+  it('runs rg command with dot path, creates overlay, spawns fff-gpui with in_grep: true, and cleans up', async () => {
     sendCommandMock.mockImplementation(async (command) => ({
       paths: [{ path: path.join(command.path, 'src/client.ts') }],
     }))
@@ -94,9 +94,10 @@ describe('findTodoFixme', () => {
 
     await findTodoFixme()
 
-    // Verify rg call
-    expect(execMock).toHaveBeenCalledWith(
-      expect.stringContaining('rg -l --smart-case'),
+    // Verify rg call uses execFile and explicitly passes path argument '.' to prevent hanging
+    expect(execFileMock).toHaveBeenCalledWith(
+      'rg',
+      ['-l', '--smart-case', '(TODO|FIXME|HACK|FIX):\\s', '.'],
       expect.any(Object),
       expect.any(Function),
     )
@@ -131,26 +132,28 @@ describe('findTodoFixme', () => {
   })
 
   it('falls back to git grep if rg fails', async () => {
-    execMock.mockImplementation((cmd: string, options: any, callback: any) => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
-      if (cmd.startsWith('rg ')) {
+      if (file === 'rg') {
         cb(new Error('rg not found'), null)
-      } else if (cmd.startsWith('git grep ')) {
+      } else if (file === 'git') {
         cb(null, { stdout: 'src/extension.ts\n', stderr: '' })
       }
     })
 
     await findTodoFixme()
 
-    expect(execMock).toHaveBeenCalledWith(
-      expect.stringContaining('git grep -l'),
+    // Verify git grep is called with aligned pattern and dot path
+    expect(execFileMock).toHaveBeenCalledWith(
+      'git',
+      ['grep', '-l', '-i', '-E', '(TODO|FIXME|HACK|FIX):[[:space:]]', '.'],
       expect.any(Object),
       expect.any(Function),
     )
   })
 
   it('shows information message if there are no files with TODOs', async () => {
-    execMock.mockImplementation((cmd: string, options: any, callback: any) => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       cb(new Error('no matches'), null)
     })

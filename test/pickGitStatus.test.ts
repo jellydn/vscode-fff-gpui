@@ -2,7 +2,7 @@ import * as path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
-  execMock,
+  execFileMock,
   sendCommandMock,
   getSocketPathMock,
   showErrorMessageMock,
@@ -11,7 +11,7 @@ const {
   showTextDocumentMock,
   fsMock,
 } = vi.hoisted(() => ({
-  execMock: vi.fn(),
+  execFileMock: vi.fn(),
   sendCommandMock: vi.fn(),
   getSocketPathMock: vi.fn(),
   showErrorMessageMock: vi.fn(),
@@ -29,7 +29,7 @@ const {
 }))
 
 vi.mock('node:child_process', () => ({
-  exec: execMock,
+  execFile: execFileMock,
 }))
 
 vi.mock('node:fs', () => fsMock)
@@ -75,13 +75,15 @@ describe('pickGitStatus', () => {
     getSocketPathMock.mockReturnValue('')
     sendCommandMock.mockResolvedValue({ paths: [] })
     fsMock.statSync.mockReturnValue({ isDirectory: () => true })
-    execMock.mockImplementation((cmd: string, options: any, callback: any) => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
-      if (cmd === 'git status --porcelain') {
-        stdout = ' M src/extension.ts\n?? test.txt\n'
-      } else if (cmd === 'git ls-files --others --exclude-standard') {
-        stdout = 'test.txt\n'
+      if (file === 'git') {
+        if (args[0] === 'status') {
+          stdout = ' M src/extension.ts\n?? test.txt\n'
+        } else if (args[0] === 'ls-files') {
+          stdout = 'test.txt\n'
+        }
       }
       cb(null, { stdout, stderr: '' })
     })
@@ -97,13 +99,15 @@ describe('pickGitStatus', () => {
     await pickGitStatus()
 
     // Verify git calls
-    expect(execMock).toHaveBeenCalledWith(
-      'git status --porcelain',
+    expect(execFileMock).toHaveBeenCalledWith(
+      'git',
+      ['status', '--porcelain'],
       expect.any(Object),
       expect.any(Function),
     )
-    expect(execMock).toHaveBeenCalledWith(
-      'git ls-files --others --exclude-standard',
+    expect(execFileMock).toHaveBeenCalledWith(
+      'git',
+      ['ls-files', '--others', '--exclude-standard'],
       expect.any(Object),
       expect.any(Function),
     )
@@ -138,7 +142,7 @@ describe('pickGitStatus', () => {
   })
 
   it('shows information message if there are no modified files', async () => {
-    execMock.mockImplementation((cmd: string, options: any, callback: any) => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       cb(null, { stdout: '', stderr: '' })
     })
@@ -150,10 +154,10 @@ describe('pickGitStatus', () => {
   })
 
   it('handles git status renames correctly', async () => {
-    execMock.mockImplementation((cmd: string, options: any, callback: any) => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
-      if (cmd === 'git status --porcelain') {
+      if (file === 'git' && args[0] === 'status') {
         stdout = 'R  old.ts -> new.ts\n'
       }
       cb(null, { stdout, stderr: '' })
