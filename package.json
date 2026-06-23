@@ -1,7 +1,7 @@
 {
   "name": "vscode-fff-gpui",
   "displayName": "fff-gpui",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Fast fuzzy file finder and grep — integrates the fff-gpui native picker into VS Code",
   "categories": [
     "Other"

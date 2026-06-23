@@ -2,6 +2,39 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
+## [0.2.2] — 2026-06-23
+
+### Architecture Deepenings
+
+Three module-depth improvements from an architecture review — each module now has a single concern with an independently testable interface.
+
+#### Transport/Protocol Separation
+
+- **`src/ipc.ts`** (new) — `sendSocketMessage(socketPath, payload): Promise<string>` raw Unix socket transport. Owns connect, write, chunk assembly, and 60s timeout. One-function interface.
+- **`src/client.ts`** — `sendCommand()` refactored to async orchestrator: resolve path → verify security → `sendSocketMessage` → JSON.parse → `isPickResponse` validation → error taxonomy. Transport is now a swappable seam.
+
+#### Type Guard Colocation
+
+- **`src/types.ts`** — now exports `isPickEntry()` and `isPickResponse()` (moved from `client.ts`). Protocol schema (types + runtime validators) lives in one module — schema changes are single-file edits.
+
+#### Path Resolution Extraction
+
+- **`src/commands/resolveSearchPath.ts`** (new) — `resolveSearchTarget(ctx: SearchContext): string` pure function. Workspace root → editor dir → homedir cascade now has its own interface and independent tests.
+
+### Testing
+
+- **91 tests** across **5 test files** (up from 54/2)
+- `test/ipc.test.ts` — 8 socket transport tests
+- `test/resolveSearchPath.test.ts` — 6 zero-mock pure function tests
+- `test/types.test.ts` — 23 zero-mock pure function tests (`isPickEntry` + `isPickResponse`)
+- `test/client.test.ts` and `test/commands.test.ts` — existing tests continue to pass unchanged
+
+### Documentation
+
+- **ADR 004** — Module depth: transport/protocol split, type guard colocation, pure path resolution
+- **Codebase map** (`.planning/codebase/`) — refreshed to reflect new modules, test files, and architecture
+- **AGENTS.md** — updated architecture and testing sections
+
 ## [0.2.1] — 2026-06-23
 
 ### Removed
