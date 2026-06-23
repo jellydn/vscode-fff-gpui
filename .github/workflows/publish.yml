@@ -19,7 +19,7 @@ on:
 #     3. Store as GitHub secret: VS_MARKETPLACE_TOKEN
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -83,3 +83,17 @@ jobs:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           extensionFile: ${{ env.VSIX }}
           registryUrl: https://marketplace.visualstudio.com
+
+      - name: Create and push git tag
+        if: steps.version-check.outputs.changed == 'true'
+        run: |
+          git tag "v${{ steps.version-check.outputs.new }}"
+          git push origin "v${{ steps.version-check.outputs.new }}"
+
+      - name: Create GitHub release
+        if: steps.version-check.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.version-check.outputs.new }}"
+          name: "v${{ steps.version-check.outputs.new }}"
+          generate_release_notes: true
