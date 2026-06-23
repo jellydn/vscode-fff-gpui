@@ -82,6 +82,8 @@ The picker window opens scoped to your workspace root. Without a workspace, it f
 > - `${workspaceFolder}/.fff-gpui.sock` — per-project socket
 > - `~/custom/fff-gpui.sock` — home-relative path
 
+> **Security:** `Run Custom Task` executes arbitrary shell commands from workspace settings. It is **disabled in untrusted workspaces** and shows a confirmation modal with the resolved command before execution. Only trust workspaces you control.
+
 ## 🔧 Troubleshooting
 
 ### "fff-gpui daemon is not running"
