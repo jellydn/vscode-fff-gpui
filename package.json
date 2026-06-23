@@ -82,6 +82,6 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
-    "reactive-vscode": "^0.3.0"
+    "reactive-vscode": "^0.4.0"
   }
 }
