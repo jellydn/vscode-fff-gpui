@@ -20,8 +20,6 @@
   "activationEvents": [
     "onCommand:fff-gpui.findFiles",
     "onCommand:fff-gpui.grepFiles",
-    "onCommand:fff-gpui.pickFileFromGitStatus",
-    "onCommand:fff-gpui.findTodoFixme",
     "onCommand:fff-gpui.resumeSearch",
     "onCommand:fff-gpui.runCustomTask"
   ],
@@ -35,14 +33,6 @@
       {
         "command": "fff-gpui.grepFiles",
         "title": "fff-gpui: Grep Files"
-      },
-      {
-        "command": "fff-gpui.pickFileFromGitStatus",
-        "title": "fff-gpui: Find Files (type git:modified to see changes)"
-      },
-      {
-        "command": "fff-gpui.findTodoFixme",
-        "title": "fff-gpui: Search TODO/FIXME"
       },
       {
         "command": "fff-gpui.resumeSearch",
@@ -63,16 +53,6 @@
         "command": "fff-gpui.grepFiles",
         "key": "cmd+k cmd+f",
         "mac": "cmd+k cmd+f"
-      },
-      {
-        "command": "fff-gpui.pickFileFromGitStatus",
-        "key": "cmd+k cmd+s",
-        "mac": "cmd+k cmd+s"
-      },
-      {
-        "command": "fff-gpui.findTodoFixme",
-        "key": "cmd+k cmd+t",
-        "mac": "cmd+k cmd+t"
       },
       {
         "command": "fff-gpui.resumeSearch",

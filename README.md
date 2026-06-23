@@ -42,18 +42,14 @@ brew services start fff-gpui
 
 Once the daemon is running, open a project in VS Code and use:
 
-- **Cmd+K Cmd+P** — Find files (type `**/*.ts` in the picker to filter by type)
-- **Cmd+K Cmd+F** — Grep file contents
-- **Cmd+K Cmd+S** — Find files (type `git:modified` in the search bar to show changed files)
-- **Cmd+K Cmd+T** — Open grep mode to search TODO/FIXME comments (type a pattern like `TODO` in the picker)
+- **Cmd+K Cmd+P** — Find files (type `**/*.ts` to filter by type, `git:modified` for changed files)
+- **Cmd+K Cmd+F** — Grep file contents (type `TODO` to find TODOs)
 - **Cmd+K Cmd+R** — Resume last search
 
 Or open the Command Palette (`Cmd+Shift+P`) and run:
 
 - `fff-gpui: Find Files`
 - `fff-gpui: Grep Files`
-- `fff-gpui: Find Files (type git:modified to see changes)`
-- `fff-gpui: Search TODO/FIXME`
 - `fff-gpui: Resume Last Search`
 - `fff-gpui: Run Custom Task`
 
@@ -61,14 +57,11 @@ The picker window opens scoped to your workspace root. Without a workspace, it f
 
 ## ⌨️ Commands
 
-| Command                          | Title                                                   |
-| -------------------------------- | ------------------------------------------------------- |
-| `fff-gpui.findFiles`             | fff-gpui: Find Files                                    |
-| `fff-gpui.grepFiles`             | fff-gpui: Grep Files                                    |
-| `fff-gpui.pickFileFromGitStatus` | fff-gpui: Find Files (type git:modified to see changes) |
-| `fff-gpui.findTodoFixme`         | fff-gpui: Search TODO/FIXME                             |
-| `fff-gpui.resumeSearch`          | fff-gpui: Resume Last Search                            |
-| `fff-gpui.runCustomTask`         | fff-gpui: Run Custom Task                               |
+| Command | Title |
+| -------------------------------- | ------------------------------------------------------- || `fff-gpui.findFiles` | fff-gpui: Find Files |
+| `fff-gpui.grepFiles` | fff-gpui: Grep Files |
+| `fff-gpui.resumeSearch` | fff-gpui: Resume Last Search |
+| `fff-gpui.runCustomTask` | fff-gpui: Run Custom Task |
 
 ## ⚙️ Configuration
 

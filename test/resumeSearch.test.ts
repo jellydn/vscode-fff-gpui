@@ -49,9 +49,9 @@ describe('resumeSearch', () => {
   })
 
   it('saveSearch overwrites previous search', () => {
-    saveSearch('todo-fixme')
-    expect(getLastSearch()?.kind).toBe('todo-fixme')
-    saveSearch('git-status')
-    expect(getLastSearch()?.kind).toBe('git-status')
+    saveSearch('files')
+    expect(getLastSearch()?.kind).toBe('files')
+    saveSearch('grep')
+    expect(getLastSearch()?.kind).toBe('grep')
   })
 })

@@ -20,18 +20,6 @@ export const { activate, deactivate } = defineExtension(() => {
     await grepFiles()
   })
 
-  useCommand('fff-gpui.pickFileFromGitStatus', async () => {
-    log('pickFileFromGitStatus command invoked')
-    saveSearch('git-status')
-    await findFiles()
-  })
-
-  useCommand('fff-gpui.findTodoFixme', async () => {
-    log('findTodoFixme command invoked')
-    saveSearch('todo-fixme')
-    await grepFiles()
-  })
-
   useCommand('fff-gpui.resumeSearch', async () => {
     log('resumeSearch command invoked')
     await resumeSearch()

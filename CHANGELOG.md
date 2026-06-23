@@ -2,6 +2,19 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
+## [0.1.8] — 2026-06-23
+
+### Removed
+
+- **`pickFileFromGitStatus` command + `Cmd+K Cmd+S` keybinding** — merged into `findFiles`. Both opened the daemon in file mode identically; users type `git:modified` to filter by git status.
+- **`findTodoFixme` command + `Cmd+K Cmd+T` keybinding** — merged into `grepFiles`. Both opened grep mode identically; users type `TODO` to find TODOs.
+
+### Changed
+
+- **6 commands → 4 commands** — only 2 source files (`findFiles.ts` + `grepFiles.ts`) powering 4 VS Code commands
+- `Cmd+K Cmd+P` hint: mentions `git:modified` alongside glob patterns
+- `Cmd+K Cmd+F` hint: mentions typing `TODO` for TODO/FIXME search
+
 ## [0.1.7] — 2026-06-23
 
 ### KISS Refactor — lean on the daemon, not external tools
