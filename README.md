@@ -52,8 +52,8 @@ Or open the Command Palette (`Cmd+Shift+P`) and run:
 
 - `fff-gpui: Find Files`
 - `fff-gpui: Grep Files`
-- `fff-gpui: Pick File from Git Status`
-- `fff-gpui: Find TODO/FIXME`
+- `fff-gpui: Find Files (type git:modified to see changes)`
+- `fff-gpui: Search TODO/FIXME`
 - `fff-gpui: Resume Last Search`
 - `fff-gpui: Run Custom Task`
 
@@ -61,14 +61,14 @@ The picker window opens scoped to your workspace root. Without a workspace, it f
 
 ## ⌨️ Commands
 
-| Command                          | Title                               |
-| -------------------------------- | ----------------------------------- |
-| `fff-gpui.findFiles`             | fff-gpui: Find Files                |
-| `fff-gpui.grepFiles`             | fff-gpui: Grep Files                |
-| `fff-gpui.pickFileFromGitStatus` | fff-gpui: Pick File from Git Status |
-| `fff-gpui.findTodoFixme`         | fff-gpui: Find TODO/FIXME           |
-| `fff-gpui.resumeSearch`          | fff-gpui: Resume Last Search        |
-| `fff-gpui.runCustomTask`         | fff-gpui: Run Custom Task           |
+| Command                          | Title                                                   |
+| -------------------------------- | ------------------------------------------------------- |
+| `fff-gpui.findFiles`             | fff-gpui: Find Files                                    |
+| `fff-gpui.grepFiles`             | fff-gpui: Grep Files                                    |
+| `fff-gpui.pickFileFromGitStatus` | fff-gpui: Find Files (type git:modified to see changes) |
+| `fff-gpui.findTodoFixme`         | fff-gpui: Search TODO/FIXME                             |
+| `fff-gpui.resumeSearch`          | fff-gpui: Resume Last Search                            |
+| `fff-gpui.runCustomTask`         | fff-gpui: Run Custom Task                               |
 
 ## ⚙️ Configuration
 

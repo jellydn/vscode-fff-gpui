@@ -2,6 +2,36 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
+## [0.1.7] — 2026-06-23
+
+### KISS Refactor — lean on the daemon, not external tools
+
+This release strips away external search dependencies by leaning on `fff-gpui`'s native capabilities. The daemon already handles glob filtering (`**/*.ts`), git-aware search (`git:modified`), and live grep — so the extension no longer shells out to `rg`, `git grep`, or `git status`.
+
+### Removed
+
+- **`rg` (ripgrep) dependency** — type-filtered commands (`findFilesWithType`, `grepFilesWithType`) removed. Users filter by type directly in the daemon's search bar via glob patterns (`**/*.rs`, `*.{ts,tsx}`, `!node_modules`).
+- **`git grep` in findTodoFixme** — command now opens the daemon in grep mode instead. Users type `TODO` / `FIXME` in the search bar.
+- **`git status` + `git ls-files` in pickGitStatus** — command now opens the daemon in file mode instead. Users type `git:modified`, `git:staged`, or `git:untracked` to filter by git status.
+- **`src/commands/overlay.ts`** — temp-directory overlay system, dead code after the above simplifications.
+- **`src/commands/typeFilter.ts`** — QuickPick type selector, no longer needed.
+
+### Changed
+
+- **8 commands → 6 commands**, powered by only **2 source files** (`findFiles.ts` + `grepFiles.ts`)
+- `findTodoFixme` delegates to `grepFiles()` (both open grep mode)
+- `pickFileFromGitStatus` delegates to `findFiles()` (both open file mode)
+- Command titles updated to reflect current behavior:
+  - `Find TODO/FIXME` → `Search TODO/FIXME`
+  - `Pick File from Git Status` → `Find Files (type git:modified to see changes)`
+- **Status bar hints** — brief tips about glob filtering and grep modes appear when the daemon window opens (8-second timeout)
+
+### Result
+
+- **Zero external search dependencies** — everything runs through the `fff-gpui` daemon
+- **52 tests** across 4 test files, all passing
+- **~40% fewer source lines** — same user-facing commands, less code
+
 ## [0.1.6] — 2026-06-23
 
 ### Fixed
