@@ -31,7 +31,9 @@ function defaultSocketPath(): string {
 
 export function resolveSocketPath(socketPath: string, workspaceRoot?: string): string {
   let resolved = socketPath
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
   if (workspaceRoot && resolved.includes('${workspaceFolder}')) {
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
     resolved = resolved.replaceAll('${workspaceFolder}', workspaceRoot)
   }
   if (resolved.startsWith('~')) {
@@ -118,7 +120,7 @@ export function sendCommand(
           return
         }
         resolve(parsed)
-      } catch (err) {
+      } catch (_err) {
         reject(new Error(`Failed to parse response from fff-gpui daemon: ${trimmed}`))
       }
     })

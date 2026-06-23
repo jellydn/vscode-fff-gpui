@@ -8,27 +8,31 @@ User installs `fff-gpui` separately: `brew install fff-gpui && brew services sta
 
 ## Commands
 
-| Script                | Action                                                                                   |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| `npm run build`       | tsup bundle `src/extension.ts` → `dist/extension.js` (CJS)                               |
-| `npm run dev`         | tsup watch mode                                                                          |
-| `npm run lint`        | Biome check                                                                              |
-| `npm run lint:fix`    | Biome check --write                                                                      |
-| `npm run typecheck`   | `tsc --noEmit`                                                                           |
-| `npm test`            | Vitest run                                                                               |
-| `npm run test:watch`  | Vitest watch mode                                                                        |
-| `npm run package`     | `vsce package --no-dependencies`                                                         |
-| `npm run publish`     | `vsce publish --no-dependencies`                                                         |
-| `npm run bump`        | `bumpp` version bump                                                                     |
-| `npm run release`     | `bash scripts/release.sh` (lint → typecheck → test → build + publish to both registries) |
-| `npm run release:dry` | dry run of release pipeline                                                              |
+| Script                      | Action                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| `pnpm build`                | tsup bundle `src/extension.ts` → `dist/extension.js` (CJS)                                   |
+| `pnpm dev`                  | tsup watch mode                                                                              |
+| `pnpm lint`                 | Biome check                                                                                  |
+| `pnpm lint:fix`             | Biome check --write                                                                          |
+| `pnpm lint:fix -- --unsafe` | Biome check --write --unsafe (auto-fix unused imports/unused vars)                           |
+| `pnpm typecheck`            | `tsc --noEmit`                                                                               |
+| `pnpm test`                 | Vitest run                                                                                   |
+| `pnpm test:watch`           | Vitest watch mode                                                                            |
+| `pnpm package`              | `vsce package --no-dependencies`                                                             |
+| `pnpm publish`              | `vsce publish --no-dependencies`                                                             |
+| `pnpm bump`                 | `bumpp` version bump                                                                         |
+| `pnpm release`              | `bash scripts/release.sh` (lint → typecheck → test → build, then publish to both registries) |
+| `pnpm release:dry`          | dry run of release pipeline                                                                  |
+
+Always run in order: `lint → typecheck → test` before building/releasing.
 
 ## Biome (lint + format)
 
 - No semicolons, single quotes, trailing commas
 - 2-space indent, 100 col width
 - `noExplicitAny` off, `useImportType` error
-- Checked paths: `src/**/*.ts`, `test/**/*.ts`, `tsup.config.ts`, `vitest.config.ts`
+- Checked paths: `**/src/**/*.ts`, `**/test/**/*.ts`, `**/tsup.config.ts`, `**/vitest.config.ts`
+- `lint:fix --unsafe` auto-removes unused imports and renames unused catch vars
 
 ## Architecture
 
@@ -48,11 +52,12 @@ Keybindings: `cmd+k cmd+p` (find), `cmd+k cmd+f` (grep)
 - Test files: `test/client.test.ts` (socket IPC), `test/commands.test.ts` (find, grep, open)
 - Mocks `node:net` globally via `vi.mock('node:net')`
 - Tests: socket connect/write, JSON parsing, PickResponse validation, error handling (ENOENT, ECONNREFUSED, timeout, invalid JSON, malformed response), socket path resolution, security verification, search path resolution, file opening (cursor positioning, partial failure, fault tolerance)
-- Runs in `node` environment
+- Runs in `node` environment (vitest.config.ts)
 
 ## Known quirks
 
 - `package` and `publish` use `--no-dependencies` because tsup already bundles `reactive-vscode` via `noExternal`. Allowing vsce to bundle it would cause a double-bundle or duplicate dependency issue.
 - `.npmrc` uses `only-built-dependencies[]` for `@vscode/vsce-sign` and `keytar` — required for pnpm to build these native deps during `vsce package`.
 - `resolveSocketPath()` expands `${workspaceFolder}` as a literal string, not VS Code's native variable — users should write `${workspaceFolder}` in their `fff-gpui.socketPath` setting.
-- Extension now handles missing workspace folders gracefully (falls back to active editor directory, then home dir).
+- Extension handles missing workspace folders gracefully (falls back to active editor directory, then home dir).
+- vitest 4.x requires `vite` as a peer dependency (vite 6.x installed).

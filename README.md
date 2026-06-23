@@ -52,6 +52,24 @@ Or open the Command Palette (`Cmd+Shift+P`) and run:
 
 The picker window opens scoped to your workspace root. Without a workspace, it falls back to the active editor's directory, then your home directory. Type to search, navigate with arrow keys, and press Enter to open the selected file(s) in VS Code.
 
+## 🤔 Why just two commands?
+
+Most file-picker extensions add a separate command for every search variant: find files, find by type, grep, grep by type, git status, TODO search, resume… This extension takes the opposite approach.
+
+**The fff-gpui daemon is the UI.** It already handles everything natively in its search bar:
+
+| You want to…         | Type in the daemon's search bar |
+| -------------------- | ------------------------------- |
+| Filter by file type  | `**/*.ts`, `*.{rs,go}`, `!dist` |
+| See git changes      | `git:modified`, `git:staged`    |
+| Search for TODOs     | `TODO` or `FIXME`               |
+| Fuzzy-find a file    | Just start typing               |
+| Live grep with regex | Toggle to regex mode, type      |
+
+So the extension only needs **two commands**: one to open the daemon in file mode (`Cmd+K Cmd+P`), one to open it in grep mode (`Cmd+K Cmd+F`). Everything else is you typing what you want — no external tools, no temp directories, no ripgrep.
+
+This is KISS: the extension is a thin bridge between VS Code and the daemon. The daemon does the heavy lifting.
+
 ## ⌨️ Commands
 
 <!-- commands -->

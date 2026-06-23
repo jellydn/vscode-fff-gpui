@@ -1,7 +1,6 @@
 import * as fs from 'node:fs'
 import * as net from 'node:net'
-import * as os from 'node:os'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resolveSocketPath, sendCommand, verifySocketSecurity } from '../src/client'
 
 vi.mock('node:net')
@@ -346,19 +345,26 @@ describe('resolveSocketPath', () => {
     expect(resolved).toBe('/absolute/path.sock')
   })
 
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
   it('expands ${workspaceFolder} when workspaceRoot is provided', () => {
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
     const resolved = resolveSocketPath('${workspaceFolder}/foo.sock', '/workspace')
     expect(resolved).toBe('/workspace/foo.sock')
   })
 
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
   it('expands ${workspaceFolder} at the start of a path', () => {
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
     const resolved = resolveSocketPath('${workspaceFolder}.sock', '/ws')
     expect(resolved).toBe('/ws.sock')
   })
 
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
   it('leaves ${workspaceFolder} as-is when no workspaceRoot', () => {
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
     const resolved = resolveSocketPath('${workspaceFolder}/foo.sock')
     // Falls through to relative path resolution against homedir
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
     expect(resolved).toBe('/mock/home/${workspaceFolder}/foo.sock')
   })
 })
