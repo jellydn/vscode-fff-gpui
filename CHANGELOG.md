@@ -6,15 +6,24 @@ All notable changes to the "vscode-fff-gpui" extension will be documented in thi
 
 ### Removed
 
-- **`fff-gpui: Resume Last Search` + `Cmd+K Cmd+R`** — removed. Resume added complexity without a `query` field in the daemon protocol (can't restore the user's last search text, just the mode).
-- **`fff-gpui: Run Custom Task`** — removed. Running arbitrary shell commands is outside the extension's scope; better handled by VS Code tasks or a dedicated extension.
+- **`fff-gpui: Resume Last Search` + `Cmd+K Cmd+R`** — resume added complexity without a `query` field in the daemon protocol.
+- **`fff-gpui: Run Custom Task`** — running arbitrary shell commands is outside the extension's scope.
 - **`fff-gpui.customTasks` configuration setting** — removed along with the command.
+
+### Added
+
+- **Fault-tolerant file loading** — `openFiles()` load stage uses `Promise.allSettled`; one bad path no longer rejects the entire batch. User gets a warning with failure count.
+- **PickResponse validation** — `isPickResponse()` type guard rejects malformed daemon responses before they reach `openFiles()`.
+- **Truncated parse-error payload** — full daemon response logged to output channel, user-facing message limited to 100 characters.
+- **Auto-generated README tables** — Commands and Configuration tables generated from `package.json` via `vscode-ext-gen` (`npm run update`).
+- **Why just two commands?** section in README explaining the KISS philosophy.
 
 ### Changed
 
 - **4 commands → 2 commands** — only `findFiles` (`Cmd+K Cmd+P`) and `grepFiles` (`Cmd+K Cmd+F`)
-- **2 keybindings** — dead simple: file mode + grep mode
-- **1 config setting** — only `fff-gpui.socketPath` remains
+- **2 keybindings** — file mode + grep mode
+- **1 config setting** — only `fff-gpui.socketPath`
+- **54 tests** across 2 test files
 
 ## [0.2.0] — 2026-06-23
 
