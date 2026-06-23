@@ -3,8 +3,11 @@
   "displayName": "fff-gpui",
   "version": "0.1.0",
   "description": "Fast fuzzy file finder and grep — integrates the fff-gpui native picker into VS Code",
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "license": "MIT",
+  "icon": "logo.png",
   "publisher": "jellydn",
   "repository": {
     "type": "git",
@@ -62,13 +65,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "bump": "bumpp",
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.2",
     "bumpp": "^9.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.5.0",
