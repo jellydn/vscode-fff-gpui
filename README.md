@@ -15,6 +15,8 @@ A fast, keyboard-driven fuzzy file finder and live grep for VS Code — powered 
 
 fff-gpui gives you frecency-ranked search, syntax-highlighted previews, and git-aware file indexing in a native overlay window. This extension bridges it into VS Code so you can summon it with the same keybindings you'd use in Zed.
 
+[![Demo](https://i.gyazo.com/0037af83f1632ff7f1a819de9b3baf47.gif)](https://gyazo.com/0037af83f1632ff7f1a819de9b3baf47)
+
 ## ✨ Features
 
 - **Fuzzy file search** across your workspace with frecency ranking — files you open often rise to the top
