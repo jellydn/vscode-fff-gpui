@@ -6,6 +6,7 @@ export default defineConfig({
   target: 'es2022',
   platform: 'node',
   external: ['vscode'],
+  noExternal: ['reactive-vscode'],
   clean: true,
   minify: false,
   sourcemap: true,

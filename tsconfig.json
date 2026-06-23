@@ -12,9 +12,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "outDir": "dist",
-    "rootDir": "src",
     "sourceMap": true
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "test"]
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "dist"]
 }
