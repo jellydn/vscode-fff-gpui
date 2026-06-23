@@ -37,8 +37,8 @@ export async function resumeSearch(): Promise<void> {
       break
     }
     case 'git-status': {
-      const { pickGitStatus } = await import('./pickGitStatus')
-      await pickGitStatus()
+      const { findFiles } = await import('./findFiles')
+      await findFiles()
       break
     }
     case 'todo-fixme': {

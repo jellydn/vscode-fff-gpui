@@ -44,7 +44,7 @@ Once the daemon is running, open a project in VS Code and use:
 
 - **Cmd+K Cmd+P** — Find files (type `**/*.ts` in the picker to filter by type)
 - **Cmd+K Cmd+F** — Grep file contents
-- **Cmd+K Cmd+S** — Pick from Git status
+- **Cmd+K Cmd+S** — Find files (type `git:modified` in the search bar to show changed files)
 - **Cmd+K Cmd+T** — Open grep mode to search TODO/FIXME comments (type a pattern like `TODO` in the picker)
 - **Cmd+K Cmd+R** — Resume last search
 

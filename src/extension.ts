@@ -1,7 +1,6 @@
 import { defineExtension, useCommand } from 'reactive-vscode'
 import { findFiles } from './commands/findFiles'
 import { grepFiles } from './commands/grepFiles'
-import { pickGitStatus } from './commands/pickGitStatus'
 import { resumeSearch, saveSearch } from './commands/resumeSearch'
 import { runCustomTask } from './commands/runCustomTask'
 import { disposeLogger, log } from './logger'
@@ -24,7 +23,7 @@ export const { activate, deactivate } = defineExtension(() => {
   useCommand('fff-gpui.pickFileFromGitStatus', async () => {
     log('pickFileFromGitStatus command invoked')
     saveSearch('git-status')
-    await pickGitStatus()
+    await findFiles()
   })
 
   useCommand('fff-gpui.findTodoFixme', async () => {

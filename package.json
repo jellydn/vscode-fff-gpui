@@ -38,7 +38,7 @@
       },
       {
         "command": "fff-gpui.pickFileFromGitStatus",
-        "title": "fff-gpui: Pick File from Git Status"
+        "title": "fff-gpui: Find Files (type git:modified to see changes)"
       },
       {
         "command": "fff-gpui.findTodoFixme",
