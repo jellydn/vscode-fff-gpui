@@ -41,10 +41,14 @@ brew services start fff-gpui
 
 Once the daemon is running, open a project in VS Code and use:- **Cmd+K Cmd+P** — Find files
 - **Cmd+K Cmd+F** — Grep file contents
+- **Cmd+K Cmd+S** — Pick from Git status
+- **Cmd+K Cmd+T** — Find TODO/FIXME comments
 
 Or open the Command Palette (`Cmd+Shift+P`) and run:
 - `fff-gpui: Find Files`
 - `fff-gpui: Grep Files`
+- `fff-gpui: Pick from Git Status`
+- `fff-gpui: Find TODO/FIXME`
 
 The picker window opens scoped to your workspace root. Without a workspace, it falls back to the active editor's directory, then your home directory. Type to search, navigate with arrow keys, and press Enter to open the selected file(s) in VS Code.
 
@@ -54,6 +58,8 @@ The picker window opens scoped to your workspace root. Without a workspace, it f
 |---------|-------|
 | `fff-gpui.findFiles` | fff-gpui: Find Files |
 | `fff-gpui.grepFiles` | fff-gpui: Grep Files |
+| `fff-gpui.pickFileFromGitStatus` | fff-gpui: Pick from Git Status |
+| `fff-gpui.findTodoFixme` | fff-gpui: Find TODO/FIXME |
 
 ## ⚙️ Configuration
 
