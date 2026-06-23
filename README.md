@@ -4,8 +4,11 @@
   <img src="logo.png" alt="fff-gpui logo" width="128" height="128">
 </p>
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/jellydn.fff-gpui)](https://marketplace.visualstudio.com/items?itemName=jellydn.fff-gpui)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jellydn/vscode-fff-gpui/blob/master/LICENSE)
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=jellydn.vscode-fff-gpui"><img src="https://img.shields.io/visual-studio-marketplace/v/jellydn.vscode-fff-gpui?label=VS%20Code" alt="VS Code Marketplace"></a>
+  <a href="https://open-vsx.org/extension/jellydn/vscode-fff-gpui"><img src="https://img.shields.io/open-vsx/v/jellydn/vscode-fff-gpui?label=Open%20VSX" alt="Open VSX Registry"></a>
+  <a href="https://github.com/jellydn/vscode-fff-gpui/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+</p>
 
 A fast, keyboard-driven fuzzy file finder and live grep for VS Code — powered by [fff-gpui](https://github.com/th0jensen/fff-gpui), the native GPUI file picker.
 
