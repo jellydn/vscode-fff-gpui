@@ -66,6 +66,8 @@
     "test:watch": "vitest",
     "bump": "bumpp",
     "package": "vsce package --no-dependencies",
+    "release": "bash scripts/release.sh",
+    "release:dry": "bash scripts/release.sh --dry-run",
     "publish": "vsce publish --no-dependencies"
   },
   "devDependencies": {
@@ -74,6 +76,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.9.2",
     "bumpp": "^9.0.0",
+    "ovsx": "^1.0.1",
     "tsup": "^8.0.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"

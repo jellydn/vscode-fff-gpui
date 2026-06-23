@@ -31,13 +31,20 @@ jobs:
 
       - run: pnpm build
 
+      - run: pnpm package
+
+      - name: Set VSIX filename
+        run: echo "VSIX=vscode-fff-gpui-$(node -p "require('./package.json').version").vsix" >> $GITHUB_ENV
+
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v1
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
+          extensionFile: ${{ env.VSIX }}
 
       - name: Publish to VS Code Marketplace
         uses: HaaLeo/publish-vscode-extension@v1
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ env.VSIX }}
