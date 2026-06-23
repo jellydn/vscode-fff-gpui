@@ -108,7 +108,7 @@ describe('findTodoFixme', () => {
         '-e',
         '(TODO|FIXME|HACK|FIX)',
         '-e',
-        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
+        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*()',
         '.',
       ],
       expect.any(Object),

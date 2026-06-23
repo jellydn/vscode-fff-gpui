@@ -22,7 +22,7 @@ async function getTodoFiles(workspaceRoot: string): Promise<string[]> {
         '-e',
         '(TODO|FIXME|HACK|FIX)',
         '-e',
-        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
+        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*()',
         '.',
       ],
       { cwd: workspaceRoot },
