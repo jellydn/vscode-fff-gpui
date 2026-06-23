@@ -1,5 +1,9 @@
 # vscode-fff-gpui
 
+<p align="center">
+  <img src="logo.png" alt="fff-gpui logo" width="128" height="128">
+</p>
+
 [![Version](https://img.shields.io/visual-studio-marketplace/v/jellydn.fff-gpui)](https://marketplace.visualstudio.com/items?itemName=jellydn.fff-gpui)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jellydn/vscode-fff-gpui/blob/master/LICENSE)
 
@@ -31,16 +35,14 @@ brew services start fff-gpui
 
 ## 🚀 Getting Started
 
-Once the daemon is running, open a project in VS Code and use:
-
-- **Cmd+K Cmd+P** — Find files in the workspace
-- **Cmd+K Cmd+F** — Grep file contents in the workspace
+Once the daemon is running, open a project in VS Code and use:- **Cmd+K Cmd+P** — Find files
+- **Cmd+K Cmd+F** — Grep file contents
 
 Or open the Command Palette (`Cmd+Shift+P`) and run:
 - `fff-gpui: Find Files`
 - `fff-gpui: Grep Files`
 
-The picker window opens scoped to your workspace root. Type to search, navigate with arrow keys, and press Enter to open the selected file(s) in VS Code.
+The picker window opens scoped to your workspace root. Without a workspace, it falls back to the active editor's directory, then your home directory. Type to search, navigate with arrow keys, and press Enter to open the selected file(s) in VS Code.
 
 ## ⌨️ Commands
 
@@ -56,6 +58,14 @@ The picker window opens scoped to your workspace root. Type to search, navigate 
 | `fff-gpui.socketPath` | Custom Unix socket path for the fff-gpui daemon | `string` | `""` (auto-detected from `$HOME`) |
 
 > The socket path defaults to `~/.local/state/fff-gpui/fff-gpui.sock`. Only set this if you've configured fff-gpui with a custom socket location.
+>
+> The path supports variable expansion:
+> - `${workspaceFolder}` — replaced with the current workspace root path
+> - `~` — replaced with your home directory
+>
+> **Examples:**
+> - `${workspaceFolder}/.fff-gpui.sock` — per-project socket
+> - `~/custom/fff-gpui.sock` — home-relative path
 
 ## 🔧 Troubleshooting
 
@@ -87,7 +97,7 @@ tail -f ~/.local/state/fff-gpui/fff-gpui.log
 
 ### No files found or picker is empty
 
-Make sure you have a workspace folder open in VS Code. The picker is scoped to `workspaceFolders[0]`.
+The picker scopes search to the first workspace folder when one is open. If no workspace is active, it falls back to the active file's directory, then your home directory. Check the Output panel (`Cmd+Shift+U` → `fff-gpui`) to see which path is being searched.
 
 ## 🛠️ Development
 
@@ -112,7 +122,7 @@ npm test
 
 👤 **jellydn**
 
-- Website: [https://jellydn.com](https://jellydn.com)
+- Website: [https://productsway.com](https://productsway.com)
 - GitHub: [@jellydn](https://github.com/jellydn)
 
 If you find this extension useful, give it a ⭐️ on [GitHub](https://github.com/jellydn/vscode-fff-gpui)!
