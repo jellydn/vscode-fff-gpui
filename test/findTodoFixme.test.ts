@@ -116,12 +116,12 @@ describe('findTodoFixme', () => {
       { recursive: true },
     )
 
-    // Verify socket command was sent with the temp dir and in_grep: true
+    // Verify socket command was sent with the temp dir and in_grep: false
     expect(sendCommandMock).toHaveBeenCalledWith(
       {
         cmd: 'open_path',
         path: expect.stringContaining(path.join('/mock/workspace', '.git', '.fff-gpui-temp-')),
-        in_grep: true,
+        in_grep: false,
       },
       undefined,
       '/mock/workspace',

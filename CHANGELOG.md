@@ -9,7 +9,7 @@ All notable changes to the "vscode-fff-gpui" extension will be documented in thi
 - **Find TODO/FIXME** command (`Cmd+K Cmd+T`) — search TODO, FIXME, HACK, and FIX comments via ripgrep, open matches in fff-gpui
 
 ### Fixed
-- CI publish workflow: switch from Entra ID OIDC to PAT-based auth with version-bump gate
+- CI publish workflow: switch from Entra ID OIDC to PAT-based auth with version-bump gate (stabilized across 0.1.4–0.1.6)
 
 ## [0.1.2] — 2026-06-23
 

@@ -72,7 +72,7 @@ export async function findTodoFixme(): Promise<void> {
       {
         cmd: 'open_path',
         path: tempDir,
-        in_grep: true,
+        in_grep: false,
       },
       getSocketPath() || undefined,
       workspaceRoot,
