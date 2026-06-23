@@ -42,7 +42,7 @@
       },
       {
         "command": "fff-gpui.findTodoFixme",
-        "title": "fff-gpui: Find TODO/FIXME"
+        "title": "fff-gpui: Search TODO/FIXME"
       },
       {
         "command": "fff-gpui.resumeSearch",
