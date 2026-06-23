@@ -2,6 +2,7 @@ import * as fs from 'node:fs'
 import * as net from 'node:net'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { log } from './logger'
 import type { PickEntry, PickResponse, ServiceCommand } from './types'
 
 function isPickEntry(entry: unknown): entry is PickEntry {
@@ -121,7 +122,10 @@ export function sendCommand(
         }
         resolve(parsed)
       } catch (_err) {
-        reject(new Error(`Failed to parse response from fff-gpui daemon: ${trimmed}`))
+        // Log full payload to output channel; truncate in user-facing message
+        log(`Failed to parse response from fff-gpui daemon: ${trimmed}`)
+        const preview = trimmed.length > 100 ? `${trimmed.slice(0, 100)}…` : trimmed
+        reject(new Error(`Failed to parse response from fff-gpui daemon: ${preview}`))
       }
     })
 

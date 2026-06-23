@@ -19,6 +19,10 @@ vi.mock('node:os', () => ({
   userInfo: () => ({ uid: 1000 }),
 }))
 
+vi.mock('../src/logger', () => ({
+  log: vi.fn(),
+}))
+
 const MockSocket = {
   on: vi.fn(),
   write: vi.fn(),
