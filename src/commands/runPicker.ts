@@ -1,9 +1,9 @@
 import * as os from 'node:os'
-import * as path from 'node:path'
 import * as vscode from 'vscode'
 import { sendCommand } from '../client'
 import { getSocketPath } from '../config'
 import { openFiles } from './openFiles'
+import { resolveSearchTarget } from './resolveSearchPath'
 
 export interface PickerOptions {
   inGrep: boolean
@@ -11,15 +11,11 @@ export interface PickerOptions {
 }
 
 export async function runPicker(options: PickerOptions): Promise<void> {
-  let searchPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
-  if (!searchPath) {
-    const activeEditor = vscode.window.activeTextEditor
-    if (activeEditor && activeEditor.document.uri.scheme === 'file') {
-      searchPath = path.dirname(activeEditor.document.uri.fsPath)
-    } else {
-      searchPath = os.homedir()
-    }
-  }
+  const searchPath = resolveSearchTarget({
+    workspaceFolders: vscode.workspace.workspaceFolders,
+    activeEditor: vscode.window.activeTextEditor,
+    homedir: os.homedir(),
+  })
 
   try {
     vscode.window.setStatusBarMessage(options.statusTip, 8000)
