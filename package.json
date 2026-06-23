@@ -19,7 +19,9 @@
   },
   "activationEvents": [
     "onCommand:fff-gpui.findFiles",
-    "onCommand:fff-gpui.grepFiles"
+    "onCommand:fff-gpui.grepFiles",
+    "onCommand:fff-gpui.pickFileFromGitStatus",
+    "onCommand:fff-gpui.findTodoFixme"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -31,6 +33,14 @@
       {
         "command": "fff-gpui.grepFiles",
         "title": "fff-gpui: Grep Files"
+      },
+      {
+        "command": "fff-gpui.pickFileFromGitStatus",
+        "title": "fff-gpui: Pick File from Git Status"
+      },
+      {
+        "command": "fff-gpui.findTodoFixme",
+        "title": "fff-gpui: Find TODO/FIXME"
       }
     ],
     "keybindings": [
@@ -43,6 +53,16 @@
         "command": "fff-gpui.grepFiles",
         "key": "cmd+k cmd+f",
         "mac": "cmd+k cmd+f"
+      },
+      {
+        "command": "fff-gpui.pickFileFromGitStatus",
+        "key": "cmd+k cmd+s",
+        "mac": "cmd+k cmd+s"
+      },
+      {
+        "command": "fff-gpui.findTodoFixme",
+        "key": "cmd+k cmd+t",
+        "mac": "cmd+k cmd+t"
       }
     ],
     "configuration": {
