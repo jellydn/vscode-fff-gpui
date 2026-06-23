@@ -1,6 +1,5 @@
 import { defineExtension, useCommand } from 'reactive-vscode'
 import { findFiles } from './commands/findFiles'
-import { findTodoFixme } from './commands/findTodoFixme'
 import { grepFiles } from './commands/grepFiles'
 import { pickGitStatus } from './commands/pickGitStatus'
 import { resumeSearch, saveSearch } from './commands/resumeSearch'
@@ -31,7 +30,7 @@ export const { activate, deactivate } = defineExtension(() => {
   useCommand('fff-gpui.findTodoFixme', async () => {
     log('findTodoFixme command invoked')
     saveSearch('todo-fixme')
-    await findTodoFixme()
+    await grepFiles()
   })
 
   useCommand('fff-gpui.resumeSearch', async () => {

@@ -42,8 +42,8 @@ export async function resumeSearch(): Promise<void> {
       break
     }
     case 'todo-fixme': {
-      const { findTodoFixme } = await import('./findTodoFixme')
-      await findTodoFixme()
+      const { grepFiles } = await import('./grepFiles')
+      await grepFiles()
       break
     }
   }
