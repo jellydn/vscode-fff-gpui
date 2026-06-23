@@ -6,6 +6,7 @@ const {
   sendCommandMock,
   getSocketPathMock,
   showErrorMessageMock,
+  showWarningMessageMock,
   showTextDocumentMock,
   openTextDocumentMock,
   mockState,
@@ -13,6 +14,7 @@ const {
   sendCommandMock: vi.fn(),
   getSocketPathMock: vi.fn(),
   showErrorMessageMock: vi.fn(),
+  showWarningMessageMock: vi.fn(),
   showTextDocumentMock: vi.fn(),
   openTextDocumentMock: vi.fn(),
   mockState: {
@@ -70,6 +72,7 @@ vi.mock('vscode', () => {
         return mockState.activeTextEditor
       },
       showErrorMessage: showErrorMessageMock,
+      showWarningMessage: showWarningMessageMock,
       showTextDocument: showTextDocumentMock,
       setStatusBarMessage: vi.fn(),
     },
@@ -438,14 +441,31 @@ describe('openFiles', () => {
     expect(call[1].selection).toBeUndefined()
   })
 
-  it('handles partial document load failure by rejecting', async () => {
+  it('handles partial document load failure without rejecting — opens remaining files', async () => {
     openTextDocumentMock
       .mockResolvedValueOnce({ uri: { fsPath: '/a.ts' }, fileName: '/a.ts' })
       .mockRejectedValueOnce(new Error('File not found'))
     const entries = [{ path: '/a.ts' }, { path: '/missing.ts' }]
 
-    await expect(openFiles(entries)).rejects.toThrow('File not found')
+    await openFiles(entries)
+
     expect(openTextDocumentMock).toHaveBeenCalledTimes(2)
+    expect(showTextDocumentMock).toHaveBeenCalledTimes(1)
+    expect(showWarningMessageMock).toHaveBeenCalledWith('fff-gpui: failed to open 1 file(s)')
+  })
+
+  it('shows warning when all files fail to load', async () => {
+    openTextDocumentMock
+      .mockRejectedValueOnce(new Error('file 1 gone'))
+      .mockRejectedValueOnce(new Error('file 2 gone'))
+      .mockRejectedValueOnce(new Error('file 3 gone'))
+    const entries = [{ path: '/a.ts' }, { path: '/b.ts' }, { path: '/c.ts' }]
+
+    await openFiles(entries)
+
+    expect(openTextDocumentMock).toHaveBeenCalledTimes(3)
+    expect(showTextDocumentMock).not.toHaveBeenCalled()
+    expect(showWarningMessageMock).toHaveBeenCalledWith('fff-gpui: failed to open 3 file(s)')
   })
 
   it('does not reject when a showTextDocument call fails, other files still open', async () => {
