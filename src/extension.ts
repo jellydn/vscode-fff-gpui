@@ -1,6 +1,5 @@
 import { defineExtension, useCommand } from 'reactive-vscode'
 import { findFiles } from './commands/findFiles'
-import { findFilesWithType, grepFilesWithType } from './commands/findFilesWithType'
 import { findTodoFixme } from './commands/findTodoFixme'
 import { grepFiles } from './commands/grepFiles'
 import { pickGitStatus } from './commands/pickGitStatus'
@@ -17,22 +16,10 @@ export const { activate, deactivate } = defineExtension(() => {
     await findFiles()
   })
 
-  useCommand('fff-gpui.findFilesWithType', async () => {
-    log('findFilesWithType command invoked')
-    saveSearch('files-with-type')
-    await findFilesWithType()
-  })
-
   useCommand('fff-gpui.grepFiles', async () => {
     log('grepFiles command invoked')
     saveSearch('grep')
     await grepFiles()
-  })
-
-  useCommand('fff-gpui.grepFilesWithType', async () => {
-    log('grepFilesWithType command invoked')
-    saveSearch('grep-with-type')
-    await grepFilesWithType()
   })
 
   useCommand('fff-gpui.pickFileFromGitStatus', async () => {

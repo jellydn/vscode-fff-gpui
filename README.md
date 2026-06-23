@@ -19,6 +19,7 @@ fff-gpui gives you frecency-ranked search, syntax-highlighted previews, and git-
 
 - **Fuzzy file search** across your workspace with frecency ranking — files you open often rise to the top
 - **Live grep** with plain text, regex, and fuzzy modes — results stream as you type
+- **Glob filtering** — type `**/*.rs`, `*.{ts,tsx}`, or `!node_modules` in the search bar to narrow results
 - **Syntax-highlighted preview** in a side pane powered by Tree-sitter
 - **Git-aware** — see modified, staged, and untracked files at a glance
 - **Multi-select** with Tab to open several files at once
@@ -33,23 +34,19 @@ fff-gpui must be installed and running as a background daemon.
 brew tap th0jensen/fff-gpui
 brew install fff-gpui
 brew services start fff-gpui
-
-# Install ripgrep (required for type-filtered search and TODO/FIXME)
-brew install ripgrep
 ```
 
 > **Note:** fff-gpui is currently macOS-only (Apple Silicon and Intel).
 
 ## 🚀 Getting Started
 
-Once the daemon is running, open a project in VS Code and use:- **Cmd+K Cmd+P** — Find files
+Once the daemon is running, open a project in VS Code and use:
 
+- **Cmd+K Cmd+P** — Find files (type `**/*.ts` in the picker to filter by type)
 - **Cmd+K Cmd+F** — Grep file contents
 - **Cmd+K Cmd+S** — Pick from Git status
 - **Cmd+K Cmd+T** — Find TODO/FIXME comments
 - **Cmd+K Cmd+R** — Resume last search
-- **Cmd+K Shift+P** — Find files (with type filter)
-- **Cmd+K Shift+F** — Grep files (with type filter)
 
 Or open the Command Palette (`Cmd+Shift+P`) and run:
 
@@ -58,24 +55,20 @@ Or open the Command Palette (`Cmd+Shift+P`) and run:
 - `fff-gpui: Pick File from Git Status`
 - `fff-gpui: Find TODO/FIXME`
 - `fff-gpui: Resume Last Search`
-- `fff-gpui: Find Files (with type filter)`
-- `fff-gpui: Grep Files (with type filter)`
 - `fff-gpui: Run Custom Task`
 
 The picker window opens scoped to your workspace root. Without a workspace, it falls back to the active editor's directory, then your home directory. Type to search, navigate with arrow keys, and press Enter to open the selected file(s) in VS Code.
 
 ## ⌨️ Commands
 
-| Command                          | Title                                   |
-| -------------------------------- | --------------------------------------- |
-| `fff-gpui.findFiles`             | fff-gpui: Find Files                    |
-| `fff-gpui.findFilesWithType`     | fff-gpui: Find Files (with type filter) |
-| `fff-gpui.grepFiles`             | fff-gpui: Grep Files                    |
-| `fff-gpui.grepFilesWithType`     | fff-gpui: Grep Files (with type filter) |
-| `fff-gpui.pickFileFromGitStatus` | fff-gpui: Pick File from Git Status     |
-| `fff-gpui.findTodoFixme`         | fff-gpui: Find TODO/FIXME               |
-| `fff-gpui.resumeSearch`          | fff-gpui: Resume Last Search            |
-| `fff-gpui.runCustomTask`         | fff-gpui: Run Custom Task               |
+| Command                          | Title                               |
+| -------------------------------- | ----------------------------------- |
+| `fff-gpui.findFiles`             | fff-gpui: Find Files                |
+| `fff-gpui.grepFiles`             | fff-gpui: Grep Files                |
+| `fff-gpui.pickFileFromGitStatus` | fff-gpui: Pick File from Git Status |
+| `fff-gpui.findTodoFixme`         | fff-gpui: Find TODO/FIXME           |
+| `fff-gpui.resumeSearch`          | fff-gpui: Resume Last Search        |
+| `fff-gpui.runCustomTask`         | fff-gpui: Run Custom Task           |
 
 ## ⚙️ Configuration
 

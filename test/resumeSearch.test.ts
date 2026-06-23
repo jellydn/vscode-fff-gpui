@@ -54,14 +54,4 @@ describe('resumeSearch', () => {
     saveSearch('git-status')
     expect(getLastSearch()?.kind).toBe('git-status')
   })
-
-  it('stores and retrieves files-with-type', () => {
-    saveSearch('files-with-type')
-    expect(getLastSearch()?.kind).toBe('files-with-type')
-  })
-
-  it('stores and retrieves grep-with-type', () => {
-    saveSearch('grep-with-type')
-    expect(getLastSearch()?.kind).toBe('grep-with-type')
-  })
 })

@@ -1,13 +1,7 @@
 import * as vscode from 'vscode'
 import { log } from '../logger'
 
-type SearchKind =
-  | 'files'
-  | 'files-with-type'
-  | 'grep'
-  | 'grep-with-type'
-  | 'git-status'
-  | 'todo-fixme'
+type SearchKind = 'files' | 'grep' | 'git-status' | 'todo-fixme'
 
 interface CachedSearch {
   kind: SearchKind
@@ -37,19 +31,9 @@ export async function resumeSearch(): Promise<void> {
       await findFiles()
       break
     }
-    case 'files-with-type': {
-      const { findFilesWithType } = await import('./findFilesWithType')
-      await findFilesWithType()
-      break
-    }
     case 'grep': {
       const { grepFiles } = await import('./grepFiles')
       await grepFiles()
-      break
-    }
-    case 'grep-with-type': {
-      const { grepFilesWithType } = await import('./findFilesWithType')
-      await grepFilesWithType()
       break
     }
     case 'git-status': {

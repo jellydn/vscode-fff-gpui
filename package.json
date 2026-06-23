@@ -19,9 +19,7 @@
   },
   "activationEvents": [
     "onCommand:fff-gpui.findFiles",
-    "onCommand:fff-gpui.findFilesWithType",
     "onCommand:fff-gpui.grepFiles",
-    "onCommand:fff-gpui.grepFilesWithType",
     "onCommand:fff-gpui.pickFileFromGitStatus",
     "onCommand:fff-gpui.findTodoFixme",
     "onCommand:fff-gpui.resumeSearch",
@@ -35,16 +33,8 @@
         "title": "fff-gpui: Find Files"
       },
       {
-        "command": "fff-gpui.findFilesWithType",
-        "title": "fff-gpui: Find Files (with type filter)"
-      },
-      {
         "command": "fff-gpui.grepFiles",
         "title": "fff-gpui: Grep Files"
-      },
-      {
-        "command": "fff-gpui.grepFilesWithType",
-        "title": "fff-gpui: Grep Files (with type filter)"
       },
       {
         "command": "fff-gpui.pickFileFromGitStatus",
@@ -70,19 +60,9 @@
         "mac": "cmd+k cmd+p"
       },
       {
-        "command": "fff-gpui.findFilesWithType",
-        "key": "cmd+k shift+p",
-        "mac": "cmd+k shift+p"
-      },
-      {
         "command": "fff-gpui.grepFiles",
         "key": "cmd+k cmd+f",
         "mac": "cmd+k cmd+f"
-      },
-      {
-        "command": "fff-gpui.grepFilesWithType",
-        "key": "cmd+k shift+f",
-        "mac": "cmd+k shift+f"
       },
       {
         "command": "fff-gpui.pickFileFromGitStatus",
