@@ -30,6 +30,6 @@
   },
   "files": {
     "include": ["src/**/*.ts", "test/**/*.ts", "tsup.config.ts", "vitest.config.ts"],
-    "ignore": ["dist", "node_modules"]
+    "ignore": ["dist", "node_modules", "src/generated"]
   }
 }

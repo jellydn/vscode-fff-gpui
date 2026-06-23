@@ -39,6 +39,9 @@ importers:
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@22.20.0)
+      vscode-ext-gen:
+        specifier: ^1.6.0
+        version: 1.6.0
 
 packages:
 
@@ -2206,6 +2209,10 @@ packages:
         optional: true
       jsdom:
         optional: true
+
+  vscode-ext-gen@1.6.0:
+    resolution: {integrity: sha512-oYg4QCx56hs1+EOVInhQMeuO4jKOCHuBrG9uppivGac8Cu9crJ7YKZg8bviDO60iX9IHqX7o5oRIV/Y+f96XwA==}
+    hasBin: true
 
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
@@ -4377,6 +4384,11 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+
+  vscode-ext-gen@1.6.0:
+    dependencies:
+      cac: 6.7.14
+      tinyglobby: 0.2.17
 
   whatwg-encoding@3.1.1:
     dependencies:

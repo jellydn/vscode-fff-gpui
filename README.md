@@ -54,16 +54,24 @@ The picker window opens scoped to your workspace root. Without a workspace, it f
 
 ## ⌨️ Commands
 
+<!-- commands -->
+
 | Command              | Title                |
 | -------------------- | -------------------- |
 | `fff-gpui.findFiles` | fff-gpui: Find Files |
 | `fff-gpui.grepFiles` | fff-gpui: Grep Files |
 
+<!-- commands -->
+
 ## ⚙️ Configuration
 
-| Key                   | Description                                     | Type     | Default                           |
-| --------------------- | ----------------------------------------------- | -------- | --------------------------------- |
-| `fff-gpui.socketPath` | Custom Unix socket path for the fff-gpui daemon | `string` | `""` (auto-detected from `$HOME`) |
+<!-- configs -->
+
+| Key                   | Description                                                                         | Type     | Default |
+| --------------------- | ----------------------------------------------------------------------------------- | -------- | ------- |
+| `fff-gpui.socketPath` | Custom Unix socket path for the fff-gpui daemon (auto-detected from $HOME if empty) | `string` | `""`    |
+
+<!-- configs -->
 
 > The socket path defaults to `~/.local/state/fff-gpui/fff-gpui.sock`. Only set this if you've configured fff-gpui with a custom socket location.
 >
