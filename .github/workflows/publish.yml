@@ -13,8 +13,9 @@ on:
 #
 #   VS Code Marketplace:
 #     1. Sign into https://dev.azure.com/ with your publisher account
-#     2. Create a PAT with "Marketplace (Publish)" scope at
-#        https://dev.azure.com/ (User Settings → Personal Access Tokens)
+#     2. Create a PAT at User Settings → Personal Access Tokens:
+#        - Organization: "All accessible organizations"
+#        - Scope: Marketplace → Manage (not just Publish)
 #     3. Store as GitHub secret: VS_MARKETPLACE_TOKEN
 
 permissions:
@@ -79,3 +80,4 @@ jobs:
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           extensionFile: ${{ env.VSIX }}
+          registryUrl: https://marketplace.visualstudio.com
