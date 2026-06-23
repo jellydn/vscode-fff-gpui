@@ -79,7 +79,9 @@ describe('pickGitStatus', () => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
       if (file === 'git') {
-        if (args[0] === 'status') {
+        if (args[0] === 'rev-parse' && args[1] === '--show-toplevel') {
+          stdout = '/mock/workspace\n'
+        } else if (args[0] === 'status') {
           stdout = ' M src/extension.ts\n?? test.txt\n'
         } else if (args[0] === 'ls-files') {
           stdout = 'test.txt\n'
@@ -99,6 +101,12 @@ describe('pickGitStatus', () => {
     await pickGitStatus()
 
     // Verify git calls
+    expect(execFileMock).toHaveBeenCalledWith(
+      'git',
+      ['rev-parse', '--show-toplevel'],
+      expect.any(Object),
+      expect.any(Function),
+    )
     expect(execFileMock).toHaveBeenCalledWith(
       'git',
       ['status', '--porcelain'],
@@ -144,7 +152,11 @@ describe('pickGitStatus', () => {
   it('shows information message if there are no modified files', async () => {
     execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
-      cb(null, { stdout: '', stderr: '' })
+      let stdout = ''
+      if (file === 'git' && args[0] === 'rev-parse') {
+        stdout = '/mock/workspace\n'
+      }
+      cb(null, { stdout, stderr: '' })
     })
 
     await pickGitStatus()
@@ -157,8 +169,12 @@ describe('pickGitStatus', () => {
     execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
-      if (file === 'git' && args[0] === 'status') {
-        stdout = 'R  old.ts -> new.ts\n'
+      if (file === 'git') {
+        if (args[0] === 'rev-parse') {
+          stdout = '/mock/workspace\n'
+        } else if (args[0] === 'status') {
+          stdout = 'R  old.ts -> new.ts\n'
+        }
       }
       cb(null, { stdout, stderr: '' })
     })

@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process'
+import * as path from 'node:path'
 import { promisify } from 'node:util'
 import * as vscode from 'vscode'
 import { sendCommand } from '../client'
@@ -38,6 +39,11 @@ function parseGitStatusLine(line: string): string | null {
 
 async function getGitStatusFiles(workspaceRoot: string): Promise<string[]> {
   try {
+    const { stdout: gitRoot } = await execFileAsync('git', ['rev-parse', '--show-toplevel'], {
+      cwd: workspaceRoot,
+    })
+    const trimmedRoot = gitRoot.trim()
+
     const [statusResult, untrackedResult] = await Promise.all([
       execFileAsync('git', ['status', '--porcelain'], { cwd: workspaceRoot }),
       execFileAsync('git', ['ls-files', '--others', '--exclude-standard'], { cwd: workspaceRoot }),
@@ -47,13 +53,25 @@ async function getGitStatusFiles(workspaceRoot: string): Promise<string[]> {
       .split('\n')
       .map(parseGitStatusLine)
       .filter((file): file is string => file !== null)
+      .map((file) => path.resolve(trimmedRoot, file))
 
     const untrackedFiles = untrackedResult.stdout
       .split('\n')
       .filter(Boolean)
       .map((line) => unquoteGitFilename(line))
+      .map((file) => path.resolve(trimmedRoot, file))
 
-    return [...new Set([...trackedFiles, ...untrackedFiles])]
+    const allAbsoluteFiles = [...new Set([...trackedFiles, ...untrackedFiles])]
+
+    return allAbsoluteFiles
+      .map((absPath) => {
+        const relPath = path.relative(workspaceRoot, absPath)
+        if (relPath.startsWith('..') || path.isAbsolute(relPath)) {
+          return null
+        }
+        return relPath
+      })
+      .filter((file): file is string => file !== null)
   } catch (err) {
     log(`Failed to get git status files: ${err}`)
     return []
