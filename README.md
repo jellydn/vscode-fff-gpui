@@ -44,31 +44,26 @@ Once the daemon is running, open a project in VS Code and use:
 
 - **Cmd+K Cmd+P** — Find files (type `**/*.ts` to filter by type, `git:modified` for changed files)
 - **Cmd+K Cmd+F** — Grep file contents (type `TODO` to find TODOs)
-- **Cmd+K Cmd+R** — Resume last search
 
 Or open the Command Palette (`Cmd+Shift+P`) and run:
 
 - `fff-gpui: Find Files`
 - `fff-gpui: Grep Files`
-- `fff-gpui: Resume Last Search`
-- `fff-gpui: Run Custom Task`
 
 The picker window opens scoped to your workspace root. Without a workspace, it falls back to the active editor's directory, then your home directory. Type to search, navigate with arrow keys, and press Enter to open the selected file(s) in VS Code.
 
 ## ⌨️ Commands
 
-| Command | Title |
-| -------------------------------- | ------------------------------------------------------- || `fff-gpui.findFiles` | fff-gpui: Find Files |
+| Command              | Title                |
+| -------------------- | -------------------- |
+| `fff-gpui.findFiles` | fff-gpui: Find Files |
 | `fff-gpui.grepFiles` | fff-gpui: Grep Files |
-| `fff-gpui.resumeSearch` | fff-gpui: Resume Last Search |
-| `fff-gpui.runCustomTask` | fff-gpui: Run Custom Task |
 
 ## ⚙️ Configuration
 
-| Key                    | Description                                      | Type     | Default                           |
-| ---------------------- | ------------------------------------------------ | -------- | --------------------------------- |
-| `fff-gpui.socketPath`  | Custom Unix socket path for the fff-gpui daemon  | `string` | `""` (auto-detected from `$HOME`) |
-| `fff-gpui.customTasks` | Custom shell tasks for 'Run Custom Task' command | `array`  | `[]`                              |
+| Key                   | Description                                     | Type     | Default                           |
+| --------------------- | ----------------------------------------------- | -------- | --------------------------------- |
+| `fff-gpui.socketPath` | Custom Unix socket path for the fff-gpui daemon | `string` | `""` (auto-detected from `$HOME`) |
 
 > The socket path defaults to `~/.local/state/fff-gpui/fff-gpui.sock`. Only set this if you've configured fff-gpui with a custom socket location.
 >
@@ -81,8 +76,6 @@ The picker window opens scoped to your workspace root. Without a workspace, it f
 >
 > - `${workspaceFolder}/.fff-gpui.sock` — per-project socket
 > - `~/custom/fff-gpui.sock` — home-relative path
-
-> **Security:** `Run Custom Task` executes arbitrary shell commands from workspace settings. It is **disabled in untrusted workspaces** and shows a confirmation modal with the resolved command before execution. Only trust workspaces you control.
 
 ## 🔧 Troubleshooting
 

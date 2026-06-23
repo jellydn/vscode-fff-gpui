@@ -19,9 +19,7 @@
   },
   "activationEvents": [
     "onCommand:fff-gpui.findFiles",
-    "onCommand:fff-gpui.grepFiles",
-    "onCommand:fff-gpui.resumeSearch",
-    "onCommand:fff-gpui.runCustomTask"
+    "onCommand:fff-gpui.grepFiles"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -33,14 +31,6 @@
       {
         "command": "fff-gpui.grepFiles",
         "title": "fff-gpui: Grep Files"
-      },
-      {
-        "command": "fff-gpui.resumeSearch",
-        "title": "fff-gpui: Resume Last Search"
-      },
-      {
-        "command": "fff-gpui.runCustomTask",
-        "title": "fff-gpui: Run Custom Task"
       }
     ],
     "keybindings": [
@@ -53,11 +43,6 @@
         "command": "fff-gpui.grepFiles",
         "key": "cmd+k cmd+f",
         "mac": "cmd+k cmd+f"
-      },
-      {
-        "command": "fff-gpui.resumeSearch",
-        "key": "cmd+k cmd+r",
-        "mac": "cmd+k cmd+r"
       }
     ],
     "configuration": {
@@ -67,24 +52,6 @@
           "type": "string",
           "default": "",
           "description": "Custom Unix socket path for the fff-gpui daemon (auto-detected from $HOME if empty)"
-        },
-        "fff-gpui.customTasks": {
-          "type": "array",
-          "default": [],
-          "description": "Custom shell tasks to run via 'fff-gpui: Run Custom Task'",
-          "items": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "type": "string",
-                "description": "Display name for the task"
-              },
-              "command": {
-                "type": "string",
-                "description": "Shell command to execute"
-              }
-            }
-          }
         }
       }
     }

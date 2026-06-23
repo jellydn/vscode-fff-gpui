@@ -2,6 +2,20 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
+## [0.2.1] — 2026-06-23
+
+### Removed
+
+- **`fff-gpui: Resume Last Search` + `Cmd+K Cmd+R`** — removed. Resume added complexity without a `query` field in the daemon protocol (can't restore the user's last search text, just the mode).
+- **`fff-gpui: Run Custom Task`** — removed. Running arbitrary shell commands is outside the extension's scope; better handled by VS Code tasks or a dedicated extension.
+- **`fff-gpui.customTasks` configuration setting** — removed along with the command.
+
+### Changed
+
+- **4 commands → 2 commands** — only `findFiles` (`Cmd+K Cmd+P`) and `grepFiles` (`Cmd+K Cmd+F`)
+- **2 keybindings** — dead simple: file mode + grep mode
+- **1 config setting** — only `fff-gpui.socketPath` remains
+
 ## [0.2.0] — 2026-06-23
 
 ### KISS Refactor — lean on the daemon, not external tools

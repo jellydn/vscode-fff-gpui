@@ -32,23 +32,22 @@ User installs `fff-gpui` separately: `brew install fff-gpui && brew services sta
 
 ## Architecture
 
-- `src/extension.ts` — entrypoint. Registers four commands: `findFiles`, `grepFiles`, `resumeSearch`, `runCustomTask`.
-- `src/config.ts` — reads `fff-gpui.socketPath` and `fff-gpui.customTasks` VS Code settings.
+- `src/extension.ts` — entrypoint. Registers two commands: `findFiles`, `grepFiles`.
+- `src/config.ts` — reads `fff-gpui.socketPath` VS Code setting.
 - `src/client.ts` — `sendCommand()` writes JSON to Unix socket, returns selected file paths. 60s timeout. Includes `verifySocketSecurity()` (owner check + world-writable check). Socket path resolution supports `${workspaceFolder}`, `~`, relative, and absolute paths.
-- `src/commands/findFiles.ts` / `grepFiles.ts` — call `sendCommand({ cmd: 'open_path', path, in_grep })` then `openFiles()`. Falls back to active editor dir → `os.homedir()` when no workspace folder.
-- `src/commands/resumeSearch.ts` — caches last search kind, re-invokes via dynamic import.
-- `src/commands/runCustomTask.ts` — picks from `fff-gpui.customTasks` config, runs in a VS Code terminal.
-- `src/commands/openFiles.ts` — opens documents, converts 1-indexed line/col from daemon to 0-indexed.
+- `src/commands/findFiles.ts` / `grepFiles.ts` — thin wrappers calling shared `runPicker({ inGrep, statusTip })`, then `openFiles()`.
+- `src/commands/runPicker.ts` — shared picker runner: resolves search path (workspace → editor dir → homedir), sends command to daemon, opens results.
+- `src/commands/openFiles.ts` — opens documents, converts 1-indexed line/col from daemon to 0-indexed. Fault-tolerant load stage (Promise.allSettled).
 - `src/types.ts` — `ServiceCommand`, `PickEntry`, `PickResponse`.
 - `src/logger.ts` — VS Code OutputChannel logger.
 
-Keybindings: `cmd+k cmd+p` (find), `cmd+k cmd+f` (grep), `cmd+k cmd+r` (resume)
+Keybindings: `cmd+k cmd+p` (find), `cmd+k cmd+f` (grep)
 
 ## Testing
 
-- Single test file: `test/client.test.ts`
+- Test files: `test/client.test.ts` (socket IPC), `test/commands.test.ts` (find, grep, open)
 - Mocks `node:net` globally via `vi.mock('node:net')`
-- Tests: socket connect/write, JSON parsing, error handling (ENOENT, ECONNREFUSED, timeout, invalid JSON), socket path resolution, security verification
+- Tests: socket connect/write, JSON parsing, PickResponse validation, error handling (ENOENT, ECONNREFUSED, timeout, invalid JSON, malformed response), socket path resolution, security verification, search path resolution, file opening (cursor positioning, partial failure, fault tolerance)
 - Runs in `node` environment
 
 ## Known quirks
