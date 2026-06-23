@@ -2,14 +2,14 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
-## [Unreleased]
+## [0.1.4] — 2026-06-23
 
 ### Added
 - **Pick from Git Status** command (`Cmd+K Cmd+S`) — fuzzy-pick modified, staged, and untracked files from `git status`
 - **Find TODO/FIXME** command (`Cmd+K Cmd+T`) — search TODO, FIXME, HACK, and FIX comments via ripgrep, open matches in fff-gpui
 
 ### Fixed
-- CI publish workflow: switch from tag-triggered OIDC to main-branch trigger (Azure Entra ID does not support wildcard subjects)
+- CI publish workflow: switch from Entra ID OIDC to PAT-based auth with version-bump gate
 
 ## [0.1.2] — 2026-06-23
 
