@@ -1,23 +1,30 @@
+import * as os from 'node:os'
+import * as path from 'node:path'
 import * as vscode from 'vscode'
 import { sendCommand } from '../client'
 import { getSocketPath } from '../config'
 import { openFiles } from './openFiles'
 
 export async function grepFiles(): Promise<void> {
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
-  if (!workspaceRoot) {
-    vscode.window.showErrorMessage('fff-gpui: No workspace folder open')
-    return
+  let searchPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+  if (!searchPath) {
+    const activeEditor = vscode.window.activeTextEditor
+    if (activeEditor && activeEditor.document.uri.scheme === 'file') {
+      searchPath = path.dirname(activeEditor.document.uri.fsPath)
+    } else {
+      searchPath = os.homedir()
+    }
   }
 
   try {
     const response = await sendCommand(
       {
         cmd: 'open_path',
-        path: workspaceRoot,
+        path: searchPath,
         in_grep: true,
       },
       getSocketPath() || undefined,
+      searchPath,
     )
     await openFiles(response.paths)
   } catch (err) {
