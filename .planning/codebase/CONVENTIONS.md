@@ -1,105 +1,150 @@
-# Coding Conventions
+# CONVENTIONS.md — Coding Conventions
 
-**Analysis Date:** 2026-06-23
+## Formatting (Biome)
 
-## Naming Patterns
+- **Semicolons**: None (`semicolons: "asNeeded"`)
+- **Quotes**: Single quotes (`quoteStyle: "single"`)
+- **Trailing commas**: All (`trailingCommas: "all"`)
+- **Indent**: 2 spaces (`indentStyle: "space"`, `indentWidth: 2`)
+- **Line width**: 100 characters (`lineWidth: 100`)
+- **Imports**: Auto-organized on save (`source.organizeImports: "on"`)
 
-**Files:**
+## Linting (Biome)
 
-- Source files use descriptive camelCase module names such as `src/client.ts`, `src/config.ts`, `src/logger.ts`, `src/commands/findFiles.ts`, `src/commands/grepFiles.ts`, `src/commands/openFiles.ts`, `src/commands/resumeSearch.ts`, and `src/commands/runCustomTask.ts`.
-- Tests live under `test/` and use the `.test.ts` suffix, currently `test/client.test.ts`.
-- Build and tool configuration files are root-level TypeScript/JSON files such as `vitest.config.ts`, `tsup.config.ts`, `biome.json`, and `package.json`.
+- Preset: `recommended`
+- `noExplicitAny: off` — allowed for catch clauses and mock objects
+- `useImportType: error` — must use `import type` for type-only imports
+- Unused imports: auto-removed on `lint:fix --unsafe`
 
-**Functions:**
+## Import Style
 
-- Exported command handlers are async camelCase functions returning `Promise<void>`, e.g. `findFiles()` in `src/commands/findFiles.ts`, `grepFiles()` in `src/commands/grepFiles.ts`, `openFiles(entries)` in `src/commands/openFiles.ts`, and `runCustomTask()` in `src/commands/runCustomTask.ts`.
-- Pure helpers use camelCase verbs/nouns and explicit return types, e.g. `resolveSocketPath(socketPath, workspaceRoot)` and `verifySocketSecurity(socketPath)` in `src/client.ts`, `getSocketPath()` in `src/config.ts`, and `getLastSearch()` in `src/commands/resumeSearch.ts`.
-- Internal helpers are unexported unless needed outside the module, e.g. `defaultSocketPath()` in `src/client.ts`, `channel()` in `src/logger.ts`, and `getCustomTasks()` in `src/commands/runCustomTask.ts`.
-
-**Variables:**
-
-- Locals use camelCase and descriptive names: `socketPath`, `workspaceRoot`, `searchPath`, `activeEditor`, `response`, `outputChannel`, `lastSearch`, `selected`, and `terminal` in `src/client.ts`, `src/commands/findFiles.ts`, `src/logger.ts`, `src/commands/resumeSearch.ts`, and `src/commands/runCustomTask.ts`.
-- Tests use explicit handler variable names to capture mocked event callbacks, e.g. `connectHandler`, `dataHandler`, `endHandler`, `errorHandler`, and `timeoutHandler` in `test/client.test.ts`.
-- Constants in tests can be PascalCase when representing a mock object, e.g. `MockSocket` in `test/client.test.ts`.
-
-**Types:**
-
-- Shared exported interfaces use PascalCase and live in `src/types.ts`: `ServiceCommand`, `PickEntry`, and `PickResponse`.
-- Module-local types also use PascalCase, e.g. `SearchKind` and `CachedSearch` in `src/commands/resumeSearch.ts`, and `CustomTask` in `src/commands/runCustomTask.ts`.
-- Type-only imports use `import type`, e.g. `import type { PickResponse, ServiceCommand } from './types'` in `src/client.ts` and `import type { PickEntry } from '../types'` in `src/commands/openFiles.ts`.
-
-## Code Style
-
-**Formatting:**
-
-- Tool used: Biome via `npm run lint` (`biome check`) and `npm run lint:fix` (`biome check --write`) from `package.json`.
-- Key settings are defined in `biome.json`: 2-space indentation, 100-character line width, single quotes, trailing commas, and semicolons as needed/no semicolons in normal code.
-- Formatting pattern examples include multi-line calls with trailing commas in `src/client.ts` (`throw new Error(...,)`) and `src/commands/findFiles.ts` (`vscode.window.setStatusBarMessage(..., 8000,)`).
-
-**Linting:**
-
-- Tool used: Biome recommended rules in `biome.json`, checked over `src/**/*.ts`, `test/**/*.ts`, `tsup.config.ts`, and `vitest.config.ts`.
-- Key rules: `useImportType` is an error, `noExplicitAny` is disabled, and imports are organized by Biome (`organizeImports.enabled: true`) in `biome.json`.
-- Explicit `any` is used intentionally for test mocks and Node error handling, e.g. `catch (err: any)` in `src/client.ts` and `(net.createConnection as any)` / `(call: any[])` in `test/client.test.ts`.
-
-## Import Organization
-
-**Order:**
-
-1. Node built-ins first, using `node:` specifiers: `node:fs`, `node:net`, `node:os`, and `node:path` in `src/client.ts`; `node:os` and `node:path` in `src/commands/findFiles.ts` and `src/commands/grepFiles.ts`.
-2. External packages next: `vscode`, `reactive-vscode`, and `vitest` imports in `src/config.ts`, `src/extension.ts`, and `test/client.test.ts`.
-3. Local relative imports last, with type imports marked type-only: `../client`, `../config`, `./openFiles`, `../types`, and `./types` in files under `src/`.
-
-**Path Aliases:**
-
-- No TypeScript path aliases are used; imports are relative (`./commands/findFiles`, `../src/client`, `../types`) in `src/extension.ts`, `test/client.test.ts`, and `src/commands/openFiles.ts`.
+- Node.js built-ins: `import * as fs from 'node:fs'` (with `node:` prefix)
+- VS Code API: `import * as vscode from 'vscode'`
+- Type imports: `import type { PickEntry } from '../types'` (required by `useImportType` rule)
+- Third-party: `import { defineExtension, useCommand } from 'reactive-vscode'`
+- Test imports: Vitest's `describe`, `it`, `expect`, `vi`, `beforeEach` from `'vitest'`
+- Local imports: relative paths from current file
 
 ## Error Handling
 
-**Patterns:**
+### Socket errors (`src/client.ts`)
 
-- Socket client errors are converted to user-actionable messages in `src/client.ts`: `ENOENT` and `ECONNREFUSED` become an install/start instruction for `fff-gpui`; invalid JSON becomes `Failed to parse response from fff-gpui daemon`; timeout destroys the socket and rejects with `Connection timed out while waiting for file selection`.
-- Security validation throws synchronously in `verifySocketSecurity()` in `src/client.ts`, while `sendCommand()` catches and returns `Promise.reject(err)` so callers can use async rejection handling.
-- VS Code command handlers catch errors at the command boundary and show UI messages with `vscode.window.showErrorMessage`, e.g. `src/commands/findFiles.ts` and `src/commands/grepFiles.ts`.
-- Non-critical document display failures are isolated with `Promise.allSettled()` and logged without stopping other opens in `src/commands/openFiles.ts`.
-- User cancellation/empty state is handled with early returns: no entries in `src/commands/openFiles.ts`, no prior search in `src/commands/resumeSearch.ts`, no configured task or no selected task in `src/commands/runCustomTask.ts`.
+- `ENOENT` → `"socket file does not exist"`
+- `ECONNREFUSED` → `"daemon is not listening"`
+- Both wrap into: `"fff-gpui daemon is not running (<detail>). Install with: brew install fff-gpui && brew services start fff-gpui"`
+- Timeout: `"Connection timed out while waiting for file selection"`
 
-## Logging
+### Parse errors (`src/client.ts`)
 
-**Framework:** VS Code OutputChannel plus occasional console warning
+- Full payload logged to output channel via `log()`
+- User-facing message truncated to first 100 chars + `…`
 
-**Patterns:**
+### Validation errors (`src/client.ts`)
 
-- Extension lifecycle and command invocation logs go through `log(message)` in `src/logger.ts`, which appends timestamped lines to a lazily created `vscode.window.createOutputChannel('fff-gpui')` channel.
-- `src/extension.ts` logs activation, deactivation, and each command invocation (`findFiles`, `grepFiles`, `pickFileFromGitStatus`, `findTodoFixme`, `resumeSearch`, `runCustomTask`).
-- Search cache changes are logged in `saveSearch(kind)` in `src/commands/resumeSearch.ts`.
-- Recoverable document display failures use `console.warn('fff-gpui: failed to show document:', result.reason)` in `src/commands/openFiles.ts`.
+- Malformed response shape: `"fff-gpui daemon returned an invalid response (expected { paths: PickEntry[] })"`
+- Individual entry validation: checked inside `isPickEntry()` type guard
 
-## Comments
+### Command errors (`src/commands/runPicker.ts`)
 
-**When to Comment:**
+- Any error from `sendCommand()` is caught and displayed via `vscode.window.showErrorMessage('fff-gpui: <message>')`
+- Status bar message shown before sending (8s timeout), still visible during error
 
-- Comments are sparse and used to explain non-obvious behavior, not routine statements.
-- Examples include parallel document loading and failure isolation in `src/commands/openFiles.ts`, dynamic imports to avoid circular dependencies in `src/commands/resumeSearch.ts`, and a test expectation note about fallback path resolution in `test/client.test.ts`.
+### File loading errors (`src/commands/openFiles.ts`)
 
-**JSDoc/TSDoc:**
+- Load stage: `Promise.allSettled` — failures do not reject the batch
+- Show stage: `Promise.allSettled` — one failed show doesn't block others
+- Partial failure: `vscode.window.showWarningMessage('fff-gpui: failed to open N file(s)')`
+- Show failures: logged to `console.warn`
 
-- No JSDoc/TSDoc is currently used in `src/client.ts`, `src/extension.ts`, `src/commands/*.ts`, or `test/client.test.ts`; explicit TypeScript types provide the API documentation.
+## Pattern: Shared Runner
 
-## Function Design
+Both `findFiles` and `grepFiles` delegate to `runPicker()`. The only difference is the `inGrep` flag and `statusTip` string. This avoids code duplication.
 
-**Size:** Functions are small and focused by responsibility. Examples: `getSocketPath()` in `src/config.ts` only reads configuration; `log()` and `disposeLogger()` in `src/logger.ts` only manage logging; command modules such as `src/commands/findFiles.ts` and `src/commands/grepFiles.ts` orchestrate workspace path selection, daemon call, and opening results.
+```typescript
+// findFiles.ts
+export async function findFiles(): Promise<void> {
+  await runPicker({
+    inGrep: false,
+    statusTip: "Tip: type globs like **/*.ts or git:modified in the search bar to filter",
+  });
+}
 
-**Parameters:** Parameters are explicit and usually primitive/domain types, e.g. `sendCommand(command, socketPathOverride?, workspaceRoot?)` in `src/client.ts`, `resolveSocketPath(socketPath, workspaceRoot?)` in `src/client.ts`, and `openFiles(entries: PickEntry[])` in `src/commands/openFiles.ts`.
+// grepFiles.ts
+export async function grepFiles(): Promise<void> {
+  await runPicker({
+    inGrep: true,
+    statusTip:
+      "Tip: type a search pattern (e.g. TODO) — plain text, regex, or fuzzy modes available",
+  });
+}
+```
 
-**Return Values:** Return types are explicit. Command functions return `Promise<void>` in `src/commands/findFiles.ts`, `src/commands/grepFiles.ts`, `src/commands/openFiles.ts`, `src/commands/resumeSearch.ts`, and `src/commands/runCustomTask.ts`; helpers return concrete types such as `string`, `void`, `CachedSearch | null`, and `Promise<PickResponse>` in `src/config.ts`, `src/client.ts`, and `src/commands/resumeSearch.ts`.
+## Pattern: Fault-Tolerant Loading
 
-## Module Design
+All document operations use `Promise.allSettled` instead of `Promise.all`:
 
-**Exports:** Each module exports the functions/types used externally and keeps implementation details private. `src/client.ts` exports `resolveSocketPath`, `verifySocketSecurity`, and `sendCommand` while keeping `defaultSocketPath` private; `src/logger.ts` exports `log` and `disposeLogger` while keeping `channel` private; `src/types.ts` exports only shared interfaces.
+```typescript
+// Load stage
+const loadResults = await Promise.allSettled(
+  entries.map((entry) => vscode.workspace.openTextDocument(vscode.Uri.file(entry.path))),
+);
+// Pair successful loads with entries, skip failures
+const pairs: { entry: PickEntry; doc: vscode.TextDocument }[] = [];
+for (let i = 0; i < loadResults.length; i++) {
+  if (loadResults[i]?.status === "fulfilled") {
+    pairs.push({ entry: entries[i]!, doc: loadResults[i].value });
+  }
+}
+```
 
-**Barrel Files:** No barrel files are used. Consumers import concrete modules directly, e.g. `src/extension.ts` imports from `./commands/findFiles`, `./commands/grepFiles`, `./commands/resumeSearch`, `./commands/runCustomTask`, and `./logger`.
+## Pattern: Test Mocking (Hoisted State)
 
----
+Tests use `vi.hoisted()` for mutable mock state that needs to be accessible from both the mock factory and test body:
 
-_Convention analysis: 2026-06-23_
+```typescript
+const { sendCommandMock, mockState } = vi.hoisted(() => ({
+  sendCommandMock: vi.fn(),
+  mockState: { workspaceFolders: undefined, ... },
+}))
+
+vi.mock('../src/client', () => ({
+  sendCommand: sendCommandMock,  // references hoisted variable
+}))
+```
+
+## Pattern: Message Prefix
+
+All user-facing messages are prefixed with `fff-gpui:`:
+
+- Error messages: `"fff-gpui: <error description>"`
+- Warning messages: `"fff-gpui: failed to open N file(s)"`
+- Status bar: `"Tip: ..."` (no prefix, informational)
+
+## Pattern: Type Guards
+
+Runtime validation uses TypeScript type predicates:
+
+```typescript
+function isPickEntry(entry: unknown): entry is PickEntry { ... }
+function isPickResponse(value: unknown): value is PickResponse { ... }
+```
+
+## Pattern: Config Access
+
+Configuration is read imperatively at command invocation time, not reactively:
+
+```typescript
+export function getSocketPath(): string {
+  return vscode.workspace.getConfiguration("fff-gpui").get<string>("socketPath", "");
+}
+```
+
+## Comment Style
+
+- `// ---- Section separators ----` in test files for visual grouping
+- Minimal comments in production code — code should be self-documenting
+- Biome ignore comments used for intentional `noTemplateCurlyInString` violations:
+  ```typescript
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: literal ${workspaceFolder} string
+  if (resolved.includes('${workspaceFolder}')) { ... }
+  ```

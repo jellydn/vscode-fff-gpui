@@ -1,235 +1,138 @@
-# Testing Patterns
+# TESTING.md — Testing Patterns
 
-**Analysis Date:** 2026-06-23
+## Framework
 
-## Test Framework
+- **Vitest 4** (requires `vite 8` as peer dependency)
+- **Environment**: `node`
+- **Config**: `vitest.config.ts` — includes `test/**/*.test.ts`
 
-**Runner:**
+## Test Files
 
-- Vitest `^2.0.0` from `package.json`.
-- Config: `vitest.config.ts`
-- `vitest.config.ts` includes `test/**/*.test.ts` and uses the `node` environment, matching the socket client tests in `test/client.test.ts`.
+| File                    | Tests | Focus                                                                                       |
+| ----------------------- | ----- | ------------------------------------------------------------------------------------------- |
+| `test/client.test.ts`   | 25    | Socket IPC, response parsing, error handling, socket path resolution, security              |
+| `test/commands.test.ts` | 29    | Command handlers, search path resolution, file opening, cursor positioning, fault tolerance |
 
-**Assertion Library:**
-
-- Vitest built-in assertions via `expect` imported from `vitest` in `test/client.test.ts`.
-
-**Run Commands:**
-
-```bash
-npm test              # Run all tests via vitest run
-npm run test:watch    # Watch mode via vitest
-# No coverage command is defined in package.json
-```
-
-## Test File Organization
-
-**Location:**
-
-- Tests are in a separate root `test/` directory, not co-located with source. The current test file is `test/client.test.ts` for `src/client.ts`.
-
-**Naming:**
-
-- Test files use `*.test.ts`; `vitest.config.ts` includes `test/**/*.test.ts`.
-
-**Structure:**
-
-```
-test/
-  client.test.ts        # unit tests for src/client.ts
-src/
-  client.ts             # code under test
-```
+**Total**: 54 tests across 2 files
 
 ## Test Structure
 
-**Suite Organization:**
+### test/client.test.ts
+
+- **Mocked modules**: `node:net`, `node:fs`, `node:os`, `../src/logger`
+- **Test suites**: `sendCommand`, `resolveSocketPath`, `verifySocketSecurity`
+
+#### sendCommand tests
+
+- Sends properly formatted JSON on connect
+- Resolves with empty paths for empty response
+- Parses valid PickResponse with paths and line/column
+- Rejects on ENOENT (socket missing)
+- Rejects on ECONNREFUSED (daemon not listening)
+- Rejects on malformed JSON
+- Rejects on invalid response shape (empty object, null paths, missing path, non-string path, non-numeric line)
+- Accepts valid entries with string path and numeric line/column
+- Rejects on socket timeout
+- Uses socketPath override
+- Differentiates ENOENT (socket file missing) vs ECONNREFUSED (file exists, no daemon)
+
+#### resolveSocketPath tests
+
+- Expands `~` to homedir
+- Resolves relative paths with workspaceRoot
+- Resolves relative paths with homedir fallback
+- Preserves absolute paths
+- Expands `${workspaceFolder}` with workspaceRoot
+- Leaves `${workspaceFolder}` as-is without workspaceRoot
+
+#### verifySocketSecurity tests
+
+- Passes if path doesn't exist (ENOENT)
+- Throws if not a socket
+- Throws if not owned by current user
+- Throws if world-writable
+- Passes for secure socket (correct owner, 0o600)
+
+### test/commands.test.ts
+
+- **Mocked modules**: `../src/client`, `../src/config`, `node:os`, `vscode`
+- **Hoisted state**: `sendCommandMock`, `getSocketPathMock`, `showErrorMessageMock`, `showWarningMessageMock`, `showTextDocumentMock`, `openTextDocumentMock`, `mockState` (workspaceFolders, activeTextEditor)
+- **Test suites**: `findFiles`, `grepFiles`, `openFiles`
+
+#### findFiles + grepFiles tests
+
+- Search path resolution: workspace → editor dir → homedir (3 cases each)
+- Falls back to homedir when active editor has non-file scheme
+- Sends correct `in_grep` flag (false for find, true for grep)
+- Passes custom socket path from config
+- Passes undefined when config returns empty string
+- Opens files from response paths
+- Handles empty paths response gracefully
+- Shows error message on sendCommand failure
+- Does not attempt to open files on error
+
+#### openFiles tests
+
+- Returns immediately for empty entries
+- Loads all documents in parallel
+- Opens documents with `preview: false`
+- Positions cursor at line/column (1-indexed → 0-indexed conversion)
+- Handles entries without line/column gracefully
+- Partial failure: opens remaining files, shows warning with count
+- All-fail: shows warning, no documents opened
+- Show stage failure isolation: other files still open
+- Clamps line: 0 to index 0
+- Opens multiple files and shows all of them with correct cursor positions
+
+## Mocking Pattern
+
+### Hoisted State Pattern (used in commands.test.ts)
+
+State that needs to be mutable from both mock factories and test bodies is hoisted:
 
 ```typescript
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resolveSocketPath, sendCommand, verifySocketSecurity } from "../src/client";
+const { sendCommandMock, mockState } = vi.hoisted(() => ({
+  sendCommandMock: vi.fn(),
+  mockState: {
+    workspaceFolders: undefined as ... | undefined,
+    activeTextEditor: undefined as ... | undefined,
+  },
+}))
 
-vi.mock("node:net");
-
-const MockSocket = {
-  on: vi.fn(),
-  write: vi.fn(),
-  destroy: vi.fn(),
-  setTimeout: vi.fn(),
-};
-
-describe("sendCommand", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("sends a properly formatted JSON command on connect", async () => {
-    let connectHandler: () => void = () => {};
-    MockSocket.on.mockImplementation((event: string, handler: () => void) => {
-      if (event === "connect") connectHandler = handler;
-    });
-    (net.createConnection as any).mockReturnValue(MockSocket);
-
-    const promise = sendCommand({ cmd: "open_path", path: "/tmp/test", in_grep: false });
-    connectHandler();
-
-    expect(MockSocket.write).toHaveBeenCalledWith(
-      '{"cmd":"open_path","path":"/tmp/test","in_grep":false}\n',
-    );
-  });
-});
+vi.mock('../src/client', () => ({
+  sendCommand: sendCommandMock,  // references hoisted mock
+}))
 ```
 
-**Patterns:**
+This avoids the limitation of `vi.mock()` being hoisted above all imports — the hoisted state is available before the mock factory runs.
 
-- Tests are grouped by exported function: `describe('sendCommand')`, `describe('resolveSocketPath')`, and `describe('verifySocketSecurity')` in `test/client.test.ts`.
-- Setup uses `beforeEach(() => { vi.clearAllMocks() })` for the socket-oriented `sendCommand` suite in `test/client.test.ts`.
-- Assertions use `toHaveBeenCalledWith`, `resolves.toEqual`, `rejects.toThrow`, `toBe`, and `not.toThrow` in `test/client.test.ts`.
-- Event-driven async behavior is tested by capturing registered socket callbacks from `MockSocket.on.mockImplementation()` and invoking them manually in `test/client.test.ts`.
+### Direct vi.mock() (used in client.test.ts)
 
-## Mocking
-
-**Framework:** Vitest `vi.mock`, `vi.fn`, and `vi.mocked`
-
-**Patterns:**
+For simple mocks where state doesn't need mutation from tests:
 
 ```typescript
 vi.mock("node:net");
-
 vi.mock("node:fs", () => ({
   statSync: vi.fn().mockImplementation(() => {
-    const err = new Error("ENOENT") as any;
-    err.code = "ENOENT";
-    throw err;
+    throw enoentErr;
   }),
   existsSync: vi.fn().mockReturnValue(false),
 }));
-
-vi.mock("node:os", () => ({
-  homedir: () => "/mock/home",
-  userInfo: () => ({ uid: 1000 }),
-}));
-
-const MockSocket = {
-  on: vi.fn(),
-  write: vi.fn(),
-  destroy: vi.fn(),
-  setTimeout: vi.fn(),
-};
 ```
 
-```typescript
-let errorHandler: (err: NodeJS.ErrnoException) => void = () => {};
-MockSocket.on.mockImplementation((event: string, handler: unknown) => {
-  if (event === "error") errorHandler = handler as (err: NodeJS.ErrnoException) => void;
-});
-(net.createConnection as any).mockReturnValue(MockSocket);
-
-const promise = sendCommand({ cmd: "open_path", path: "/tmp/test" });
-
-const err = new Error("ENOENT") as NodeJS.ErrnoException;
-err.code = "ENOENT";
-errorHandler(err);
-
-await expect(promise).rejects.toThrow("fff-gpui daemon is not running");
-```
-
-**What to Mock:**
-
-- Mock Node networking for unit tests of socket behavior: `node:net` and `net.createConnection` in `test/client.test.ts`.
-- Mock filesystem/security checks for deterministic socket existence and permissions: `node:fs` (`statSync`, `existsSync`) in `test/client.test.ts`.
-- Mock OS home/user values to make path resolution deterministic: `node:os` (`homedir`, `userInfo`) in `test/client.test.ts`.
-- Mock socket event callbacks (`connect`, `data`, `end`, `error`, `timeout`) rather than opening a real Unix socket in `test/client.test.ts`.
-
-**What NOT to Mock:**
-
-- Do not mock pure path-resolution logic itself; call `resolveSocketPath()` directly and assert concrete paths in `test/client.test.ts`.
-- Do not mock the functions under test from `src/client.ts`; import `resolveSocketPath`, `sendCommand`, and `verifySocketSecurity` directly in `test/client.test.ts`.
-- Do not require a real `fff-gpui` daemon, Unix socket, or VS Code host for current unit tests; `test/client.test.ts` stays in Vitest's Node environment.
-
-## Fixtures and Factories
-
-**Test Data:**
-
-```typescript
-const response = JSON.stringify({
-  paths: [{ path: "/tmp/foo.ts", line: 12, column: 5 }],
-});
-dataHandler(Buffer.from(response));
-endHandler();
-
-await expect(promise).resolves.toEqual({
-  paths: [{ path: "/tmp/foo.ts", line: 12, column: 5 }],
-});
-```
-
-```typescript
-vi.mocked(fs.statSync).mockReturnValueOnce({
-  isSocket: () => true,
-  uid: 1000,
-  mode: 0o600,
-} as any);
-expect(() => verifySocketSecurity("/secure.sock")).not.toThrow();
-```
-
-**Location:**
-
-- Fixtures are inline in `test/client.test.ts`; there is no separate fixtures directory.
-- Reusable mock socket state is a module-level `MockSocket` object in `test/client.test.ts`.
-
-## Coverage
-
-**Requirements:** None enforced. `package.json` has `test` and `test:watch` scripts, but no coverage script or Vitest coverage settings in `vitest.config.ts`.
-
-**View Coverage:**
+## Running Tests
 
 ```bash
-# No coverage command is defined in package.json
-# If coverage is added later, configure Vitest coverage in vitest.config.ts first
+pnpm test              # Vitest run (single pass)
+pnpm test:watch        # Vitest watch mode
 ```
 
-## Test Types
+Run from CI: `pnpm lint && pnpm typecheck && pnpm test`
 
-**Unit Tests:**
+## Test Coverage Notes
 
-- Current tests are unit tests for `src/client.ts`, covering socket command serialization, response parsing, empty responses, socket error mapping, timeout handling, socket path overrides, `resolveSocketPath()` variants, and `verifySocketSecurity()` permission/ownership validation in `test/client.test.ts`.
-
-**Integration Tests:**
-
-- Not currently present. There are no tests that start a real `fff-gpui` daemon, connect to a real Unix socket, or run inside a VS Code extension host. `vitest.config.ts` uses `environment: 'node'`.
-
-**E2E Tests:**
-
-- Not used. `package.json` does not define a VS Code extension host test command, Playwright command, or other E2E runner.
-
-## Common Patterns
-
-**Async Testing:**
-
-```typescript
-const promise = sendCommand({ cmd: "open_path", path: "/tmp/test" });
-connectHandler();
-
-dataHandler(Buffer.from(response));
-endHandler();
-
-await expect(promise).resolves.toEqual({
-  paths: [{ path: "/tmp/foo.ts", line: 12, column: 5 }],
-});
-```
-
-**Error Testing:**
-
-```typescript
-const promise = sendCommand({ cmd: "open_path", path: "/tmp/test" });
-
-const err = new Error("ECONNREFUSED") as NodeJS.ErrnoException;
-err.code = "ECONNREFUSED";
-errorHandler(err);
-
-await expect(promise).rejects.toThrow("fff-gpui daemon is not running (daemon is not listening)");
-```
-
----
-
-_Testing analysis: 2026-06-23_
+- No coverage thresholds configured
+- All error paths are tested (ENOENT, ECONNREFUSED, timeout, invalid JSON, malformed shape)
+- All search path fallbacks are tested
+- Fault tolerance (partial failure, all-fail, show failures) is tested
+- Edge cases (line: 0, non-file scheme, empty config) covered

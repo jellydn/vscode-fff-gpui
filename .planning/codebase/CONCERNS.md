@@ -1,263 +1,91 @@
-# Codebase Concerns
+# CONCERNS.md — Technical Concerns
 
-**Analysis Date:** 2026-06-23
+## Known Issues (from AGENTS.md)
 
-## Tech Debt
+### 1. Socket path config not wired
 
-**Command wrappers duplicate search-root and daemon-call logic:**
+`src/config.ts` defines `getSocketPath()` but `resolveSocketPath()` in `src/client.ts` only uses the default path. The config is read by `runPicker.ts` and passed to `sendCommand()`, which does use it. **Status**: Actually wired correctly — `runPicker.ts` calls `sendCommand(command, getSocketPath() || undefined, searchPath)`. The AGENTS.md note may be stale.
 
-- Issue: `findFiles()` and `grepFiles()` carry nearly identical fallback path resolution, status-bar messaging, `sendCommand()` invocation, config lookup, and error-display code; only `in_grep` and the tip text differ.
-- Files: `src/commands/findFiles.ts:8-36`, `src/commands/grepFiles.ts:8-36`
-- Impact: Behavior can drift between file and grep commands, and future changes to workspace fallback, socket config, logging, or error presentation must be made twice.
-- Fix approach: Extract a shared helper that accepts `{ inGrep, statusTip, searchKind }` or a small `runPickerCommand()` function, then keep the command modules as thin wrappers.
+### 2. `${workspaceFolder}` is literal string expansion, not VS Code variable
 
-**Manifest advertises specialized commands that currently reuse generic picker modes:**
+`resolveSocketPath()` does a simple string `replaceAll` for `${workspaceFolder}` rather than using VS Code's native variable expansion. Users must write the literal string `${workspaceFolder}` in their `fff-gpui.socketPath` setting. This works correctly but is different from other VS Code settings that support `${workspaceFolder}` natively.
 
-- Issue: `fff-gpui.pickFileFromGitStatus` and `fff-gpui.findTodoFixme` are registered as distinct commands, but they only call `findFiles()`/`grepFiles()` with normal picker payloads; no initial `git:modified`, `TODO`, or `FIXME` query is sent to the daemon.
-- Files: `src/extension.ts:23-33`, `src/commands/findFiles.ts:24-32`, `src/commands/grepFiles.ts:24-32`, `package.json:35-47`, `README.md:48-56`
-- Impact: Command titles promise narrower workflows, but users still have to type the filter manually. This is a product/UX debt and could become a bug if callers expect these commands to pre-seed search state.
-- Fix approach: Extend `ServiceCommand` and daemon integration if the native protocol supports an initial query/filter, or rename the commands/docs to make the manual step explicit.
+### 3. Test files excluded from `tsc --noEmit` typecheck
 
-**Resume search only remembers the command kind, not the actual search state:**
+`tsconfig.json` includes `"test"` in the `include` array, so tests ARE typechecked. The AGENTS.md note about tests being excluded may be stale.
 
-- Issue: `saveSearch()` stores only `{ kind }`; `resumeSearch()` re-runs the broad file or grep command instead of restoring the prior query, selected mode, workspace, or results.
-- Files: `src/commands/resumeSearch.ts:4-18`, `src/commands/resumeSearch.ts:21-49`, `src/extension.ts:11-37`
-- Impact: The command name “Resume Last Search” is stronger than the implementation. It cannot resume the last typed query or grep state after the daemon window closes.
-- Fix approach: Either rename the feature to “Repeat Last Picker Mode” or add protocol support for persisting/restoring daemon-side search state.
+### 4. vitest 4.x requires vite as peer dependency
 
-**Documented quirks in `AGENTS.md` are stale and contradict the current code:**
+Vitest 4 requires `vite` 8.x as a peer dependency. Both are installed but this coupling means upgrading vitest requires checking vite compatibility.
 
-- Issue: The repository guidance says `resolveSocketPath()` ignores `fff-gpui.socketPath`, tests are excluded from `tsconfig.json`, and commands require an open workspace. Current code shows the socket path is read via `getSocketPath()` and passed to `sendCommand()`, `tsconfig.json` includes `test`, and commands fall back to the active editor directory or home directory.
-- Files: `AGENTS.md:51-53`, `src/config.ts:3-5`, `src/commands/findFiles.ts:9-16`, `src/commands/grepFiles.ts:9-16`, `tsconfig.json:17-18`, `test/commands.test.ts:183-205`, `test/client.test.ts:165-170`
-- Impact: Future agents or maintainers may waste time fixing already-resolved issues, or may make changes based on inaccurate assumptions about runtime behavior.
-- Fix approach: Update `AGENTS.md` to mark these quirks as resolved or replace them with the current limitations found in this audit.
+### 5. `vsce package --no-dependencies`
 
-## Known Bugs
+The `--no-dependencies` flag is used because tsup bundles `reactive-vscode` via `noExternal`. Allowing vsce to also bundle it would cause a double-bundle. This is a workaround, not a bug.
 
-**README fallback behavior is accurate now, but project guidance still says no-workspace commands error:**
+## Potential Concerns
 
-- Symptoms: There is no current no-workspace error path in `findFiles()`/`grepFiles()`; both commands fall back to the active file directory and then `os.homedir()`. The stale guidance is the bug in project documentation, not command behavior.
-- Files: `AGENTS.md:53`, `README.md:58`, `src/commands/findFiles.ts:9-16`, `src/commands/grepFiles.ts:9-16`, `test/commands.test.ts:126-166`, `test/commands.test.ts:285-309`
-- Trigger: Read `AGENTS.md` before modifying command behavior, then compare it to the current command implementation or run the no-workspace tests.
-- Workaround: Trust the source/tests over `AGENTS.md` until the guidance file is corrected.
+### 1. Daemon protocol is undocumented
 
-**Partial document-load failure aborts opening all selected files:**
+The `ServiceCommand` and `PickResponse` schemas are reverse-engineered from the fff-gpui Rust source (`src/service.rs`). There's no public protocol documentation. Any breaking change to the daemon's JSON schema could break the extension silently.
 
-- Symptoms: `openFiles()` loads every selected document with `Promise.all`; if one path cannot be opened, the whole function rejects before any `showTextDocument()` calls run. The test suite explicitly asserts this rejection.
-- Files: `src/commands/openFiles.ts:9-12`, `test/commands.test.ts:441-449`
-- Trigger: Select multiple files where at least one path no longer exists, is inaccessible, or is not a local file VS Code can open.
-- Workaround: Re-run the picker and select only accessible files. A code fix would use `Promise.allSettled()` for document loading, then show successfully loaded documents and surface failures.
+**Mitigation**: `isPickResponse()` type guard rejects unexpected shapes and produces clear error messages. The truncated parse error also helps surface issues without leaking data.
 
-**Daemon response shape is not validated after JSON parsing:**
+### 2. Single socket path assumption
 
-- Symptoms: `sendCommand()` casts `JSON.parse(trimmed)` to `PickResponse` and resolves it without checking that `paths` is an array of entries with string `path` fields.
-- Files: `src/client.ts:89-91`, `src/types.ts:7-14`, `src/commands/openFiles.ts:4-12`
-- Trigger: The daemon returns syntactically valid JSON with a wrong shape, such as `{}`, `{ "paths": null }`, or entries without `path`.
-- Workaround: None in the extension. Add runtime validation before resolving, and return a user-facing daemon protocol error for malformed responses.
+The extension assumes exactly one socket at `~/.local/state/fff-gpui/fff-gpui.sock`. If fff-gpui ever supports multiple daemon instances or changes its socket path, the extension would need updating.
 
-**Custom socket path config is wired, so the documented hardcoded-socket quirk is resolved:**
+**Mitigation**: The `fff-gpui.socketPath` config setting allows users to override the path. The `resolveSocketPath()` function supports tilde expansion, `$workspaceFolder`, and relative/absolute paths.
 
-- Symptoms: `getSocketPath()` reads `fff-gpui.socketPath`; both picker commands pass it to `sendCommand()`; `sendCommand()` falls back to the default only when no override is provided. Tests cover the override path.
-- Files: `src/config.ts:3-5`, `src/commands/findFiles.ts:30-31`, `src/commands/grepFiles.ts:30-31`, `src/client.ts:57-63`, `test/commands.test.ts:183-205`, `test/client.test.ts:165-170`, `AGENTS.md:51`
-- Trigger: Set `fff-gpui.socketPath` to a non-empty value and invoke find or grep.
-- Workaround: No workaround needed for current code; update `AGENTS.md` to remove the stale quirk.
+### 3. No socket reconnection
 
-## Security Considerations
+If the daemon restarts mid-session, the extension does not automatically reconnect. The user must retry the command. For a background daemon managed by `brew services`, this is unlikely but possible.
 
-**User-configured custom tasks execute arbitrary shell text:**
+**Potential improvement**: Implement exponential backoff reconnection in `sendCommand()`.
 
-- Risk: Any value in `fff-gpui.customTasks[].command` is sent directly to a VS Code terminal via `terminal.sendText()`, which executes the command as the user when `addNewLine` defaults to true.
-- Files: `src/commands/runCustomTask.ts:8-10`, `src/commands/runCustomTask.ts:21-32`, `package.json:92-111`, `test/runCustomTask.test.ts:46-60`
-- Current mitigation: Tasks must be configured in the user/workspace VS Code settings and selected through QuickPick; there is no sanitization, trust check, confirmation, workspace-trust gate, or allowlist.
-- Recommendations: Treat workspace-provided custom tasks as privileged. Consider checking VS Code Workspace Trust, showing the command in a confirmation prompt, documenting the risk, and rejecting malformed task objects.
+### 4. macOS-only
 
-**Unix socket security checks are helpful but still have a time-of-check/time-of-use window:**
+fff-gpui itself is macOS-only (Apple Silicon and Intel). The extension inherits this limitation. No Linux or Windows fallback exists.
 
-- Risk: `verifySocketSecurity()` checks ownership, type, and world-writable mode before `net.createConnection()`, but the socket path can be swapped between `fs.statSync()` and connect.
-- Files: `src/client.ts:28-55`, `src/client.ts:64-72`, `test/client.test.ts:250-296`
-- Current mitigation: The code rejects non-socket paths, sockets owned by a different UID, and world-writable socket files when the path exists.
-- Recommendations: Keep the check, but do not treat it as a complete authentication boundary. Prefer sockets under user-private directories, document that custom paths should not be in shared writable directories, and consider checking parent directory permissions for custom socket paths.
+### 5. No progress indicator during daemon communication
 
-**Daemon controls which local paths VS Code opens:**
+The only UI feedback during `sendCommand()` is the status bar hint (`setStatusBarMessage`, 8s timeout). There's no spinner, progress bar, or "connecting..." message. For slow connections or large workspaces, this could feel unresponsive.
 
-- Risk: The extension opens every `entry.path` returned by the daemon with `vscode.Uri.file()`. A compromised or malicious daemon could cause VS Code to open arbitrary local files readable by the user.
-- Files: `src/client.ts:89-91`, `src/commands/openFiles.ts:9-12`, `src/types.ts:7-10`
-- Current mitigation: Socket ownership/world-writable checks reduce accidental connection to another user’s daemon, but there is no path scoping against `searchPath`.
-- Recommendations: Decide whether results should be constrained to the requested workspace/search root. If yes, validate returned paths with `path.resolve()` and reject or warn on paths outside the root.
+### 6. Error messages expose internal paths
 
-**Error messages can expose daemon response content:**
+Error messages include the resolved socket path and sometimes the search path. While not a security vulnerability (these are local paths), it could be noisy in error displays.
 
-- Risk: Invalid JSON parse failures include the full trimmed daemon response in the thrown error, which is later shown to the user through `showErrorMessage()` and may reveal unexpected local paths or daemon output.
-- Files: `src/client.ts:89-94`, `src/commands/findFiles.ts:34-36`, `src/commands/grepFiles.ts:34-36`, `test/client.test.ts:131-148`
-- Current mitigation: None beyond only showing this to the local user.
-- Recommendations: Truncate parse-error payloads and send full raw responses only to the output channel when needed for debugging.
+### 7. No daemon auto-start
 
-## Performance Bottlenecks
+The extension does not attempt to start the fff-gpui daemon if it's not running. It only shows an error with install instructions. Some extensions auto-start their companion daemon.
 
-**Opening many selected files is unbounded:**
+**Decision**: Explicit opt-in via `brew services start` matches Jellydn's philosophy of minimal side effects.
 
-- Problem: `openFiles()` loads all documents in parallel and then attempts to show all documents in parallel with no concurrency limit or maximum selection guard.
-- Files: `src/commands/openFiles.ts:9-17`, `test/commands.test.ts:359-382`, `test/commands.test.ts:479-509`
-- Cause: `Promise.all()` and `Promise.allSettled()` are applied directly to the full daemon result set.
-- Improvement path: Cap multi-select count, add a confirmation for large selections, or process document opens with a small concurrency limit.
+## Tech Debt Inventory
 
-**The 60-second socket timeout may leave users waiting with little feedback:**
+| Severity | Item                                               | Location        |
+| -------- | -------------------------------------------------- | --------------- |
+| Low      | AGENTS.md "Known quirks" may contain stale entries | `AGENTS.md`     |
+| Low      | vitest-vite peer dependency coupling               | `package.json`  |
+| Medium   | Undocumented daemon protocol                       | `src/types.ts`  |
+| Medium   | No socket reconnection                             | `src/client.ts` |
+| Low      | macOS-only (inherited from fff-gpui)               | All             |
+| Low      | No progress indicator during IPC                   | `src/client.ts` |
 
-- Problem: A hung daemon or picker session keeps the command promise pending for up to 60 seconds, with only a transient status-bar tip before a timeout error.
-- Files: `src/client.ts:111-115`, `src/commands/findFiles.ts:19-35`, `src/commands/grepFiles.ts:19-35`, `test/client.test.ts:150-163`
-- Cause: The timeout is hardcoded in `sendCommand()` and is not configurable or cancellable from VS Code UI.
-- Improvement path: Consider a shorter connection timeout plus a separate user-selection timeout, expose a setting, or use `window.withProgress()`/cancellation for long waits.
+## Security Posture
 
-**Large daemon responses are accumulated as one string and parsed at end:**
+The extension has security-conscious design:
 
-- Problem: All socket chunks are appended to `data` and parsed only after `end`; there is no size limit, streaming decode, or newline-delimited frame handling beyond sending a newline to the daemon.
-- Files: `src/client.ts:72-94`
-- Cause: The client assumes one complete JSON document per connection and stores it entirely in memory.
-- Improvement path: Enforce a maximum response size, parse a single newline-delimited frame if that is the daemon protocol, and reject oversized or multi-frame responses clearly.
+- **Socket ownership verification**: `verifySocketSecurity()` checks that the socket is owned by the current user (UID match)
+- **Socket permission verification**: Rejects world-writable sockets (mode check `& 0o002`)
+- **Parse error truncation**: Full daemon payload logged to output channel, user-facing message truncated to 100 characters (Phase 7)
+- **PickResponse validation**: Type guards reject malformed or unexpected responses before they reach file opening
+- **No external network calls**: The extension only communicates with a local Unix socket
+- **No arbitrary code execution**: Commands are hardcoded (file mode + grep mode), not configurable by workspace settings
 
-## Fragile Areas
+## Future Improvements
 
-**Socket protocol boundary:**
-
-- Files: `src/client.ts:57-117`, `src/types.ts:1-14`, `test/client.test.ts:30-209`
-- Why fragile: The code assumes the daemon sends exactly one JSON object then ends the socket. Valid JSON with the wrong schema is accepted; multiple JSON messages or daemon logs mixed into stdout will fail parsing.
-- Safe modification: Add explicit protocol framing and runtime validation tests before changing command fields or response handling.
-- Test coverage: Good coverage for connect/write, empty response, valid JSON, invalid JSON, daemon missing, refused connection, and timeout; missing coverage for malformed-but-valid JSON shape, multi-message responses, large responses, and socket close without `end` semantics.
-
-**Search-root fallback and workspace semantics:**
-
-- Files: `src/commands/findFiles.ts:9-16`, `src/commands/grepFiles.ts:9-16`, `README.md:58`, `test/commands.test.ts:113-166`, `test/commands.test.ts:272-309`
-- Why fragile: Both commands duplicate the same first-workspace/active-editor/home fallback logic, and multi-root workspaces always use `workspaceFolders[0]` rather than the active file’s workspace folder.
-- Safe modification: Centralize search-root resolution and add tests for multi-root workspaces and active editors outside the first workspace.
-- Test coverage: Covers first workspace, active file fallback, home fallback, and non-file active editor for `findFiles`; `grepFiles` lacks the non-file active editor case and multi-root cases.
-
-**Opening selected files:**
-
-- Files: `src/commands/openFiles.ts:4-40`, `test/commands.test.ts:338-510`
-- Why fragile: A document-load failure rejects the whole operation, but a show failure is only logged to `console.warn`; users receive no VS Code notification for partial failures.
-- Safe modification: Use `Promise.allSettled()` for both load and show stages, preserve successful opens, and report a concise failure count through `showWarningMessage()` or the output channel.
-- Test coverage: Covers empty entries, parallel loading, preview behavior, line/column conversion, show failures, and load failure rejection; missing tests for invalid paths, out-of-range line/column relative to document length, and user-visible warning behavior.
-
-**Extension command registration versus package manifest:**
-
-- Files: `src/extension.ts:11-43`, `package.json:22-48`, `package.json:52-83`
-- Why fragile: Commands are declared in two places. If a command is added or renamed in the manifest but not registered in `extension.ts`, activation can occur without a handler.
-- Safe modification: When adding commands, update manifest, keybindings, and `useCommand()` registrations together; add a test or static check that manifest commands are registered.
-- Test coverage: No test imports `src/extension.ts` to verify command registration or manifest/implementation parity.
-
-## Scaling Limits
-
-**Single search root per invocation:**
-
-- Current capacity: One `path` string is sent in each `open_path` command.
-- Limit: Multi-root VS Code workspaces are not searched as a set; the current implementation always picks the first workspace folder unless no workspace exists.
-- Scaling path: Add workspace selection, use the active editor’s workspace folder, or extend the daemon protocol to accept multiple roots.
-
-**Single daemon socket connection per command invocation:**
-
-- Current capacity: One Unix socket connection per command, with one JSON request and one JSON response.
-- Limit: Concurrent command invocations can open multiple socket connections and race UI state in the external daemon; there is no in-extension queue or “picker already open” guard.
-- Scaling path: Serialize picker invocations or track an in-flight command promise so repeated key presses do not launch overlapping daemon interactions.
-
-**Unbounded result and selection size:**
-
-- Current capacity: The extension accepts whatever number of paths the daemon returns.
-- Limit: A large multi-select can attempt to open many documents/tabs at once, consuming memory and making VS Code unresponsive.
-- Scaling path: Add a configurable maximum open count or prompt before opening large selections.
-
-## Dependencies at Risk
-
-**`reactive-vscode`:**
-
-- Risk: The extension lifecycle and command registration depend on `reactive-vscode` `^0.4.0`, which is a small abstraction over the VS Code API and is bundled into the extension (`tsup.config.ts` marks it `noExternal`).
-- Impact: Breaking changes or maintenance issues in this dependency affect activation and command registration.
-- Migration plan: Keep command handlers simple so they can be moved to native `vscode.ExtensionContext.subscriptions.push(vscode.commands.registerCommand(...))` if needed.
-
-**VS Code engine floor `^1.85.0`:**
-
-- Risk: The extension targets an older VS Code baseline while using modern TypeScript and Node APIs in the bundled extension.
-- Impact: Runtime compatibility depends on VS Code’s extension host Node version for 1.85 and later; APIs like `String.prototype.replaceAll()` are safe for modern Node but should remain part of compatibility checks.
-- Migration plan: Keep `target: es2022` aligned with the VS Code engine, and run extension smoke tests on the minimum supported VS Code version before publishing.
-
-**External `fff-gpui` daemon protocol:**
-
-- Risk: The most important runtime dependency is not an npm package; it is the native daemon, its socket location, and its JSON protocol.
-- Impact: Daemon install, service state, protocol changes, or macOS-only availability can break all core extension commands.
-- Migration plan: Version/document the expected daemon protocol, keep daemon-missing errors actionable, and add integration tests or manual release checks against supported daemon versions.
-
-## Missing Critical Features
-
-**No output-channel logging for command failures or daemon diagnostics:**
-
-- Problem: A logger exists, but command failures are shown only as error popups and partial `showTextDocument()` failures go to `console.warn`.
-- Blocks: Users following README troubleshooting guidance to check the `fff-gpui` output panel may not see socket errors, parse failures, selected search roots, or failed file opens there.
-
-**No workspace trust handling for custom tasks:**
-
-- Problem: Workspace settings can define shell commands, and the extension runs the selected command in a terminal without checking whether the workspace is trusted.
-- Blocks: Safer use in untrusted repositories or shared workspaces where settings may be supplied by someone else.
-
-**No runtime validation of settings objects:**
-
-- Problem: `customTasks` is cast from configuration and used as if every item has string `label` and `command` fields.
-- Blocks: Robust handling of malformed settings; bad values can produce confusing QuickPick entries or terminal names.
-
-**No explicit daemon protocol version or capability negotiation:**
-
-- Problem: The client sends `{ cmd, path, in_grep }` and assumes a `{ paths }` response without negotiating supported fields or commands.
-- Blocks: Safely adding initial query support for git-status/TODO commands, richer grep metadata, or future daemon behavior changes.
-
-## Test Coverage Gaps
-
-**Extension activation and command registration:**
-
-- What's not tested: `defineExtension()` setup, `useCommand()` registrations, deactivate cleanup, and parity between `package.json` contributed commands and implemented handlers.
-- Files: `src/extension.ts:8-49`, `package.json:22-48`
-- Risk: Manifest commands could activate the extension but fail at runtime because a handler is missing or renamed.
-- Priority: Medium
-
-**Resume command execution path:**
-
-- What's not tested: `resumeSearch()` dynamically importing and invoking `findFiles()`/`grepFiles()` for each saved kind, and behavior when there is no prior search. Current tests cover only save/get state.
-- Files: `src/commands/resumeSearch.ts:21-49`, `test/resumeSearch.test.ts:39-56`
-- Risk: Resume can silently stop working while tests still pass.
-- Priority: Medium
-
-**Malformed but valid daemon responses:**
-
-- What's not tested: Valid JSON that does not match `PickResponse`, entries with missing/non-string paths, negative or non-integer line/column values, and very large responses.
-- Files: `src/client.ts:89-91`, `src/types.ts:7-14`, `test/client.test.ts:74-97`, `test/client.test.ts:131-148`
-- Risk: Bad daemon output can surface later as confusing VS Code file-open errors or uncaught exceptions.
-- Priority: High
-
-**Socket lifecycle edge cases:**
-
-- What's not tested: `close` without `end`, errors after a successful resolve/reject, partial data followed by timeout, multiple `data` frames containing multiple JSON objects, and `socket.write()` failure/backpressure.
-- Files: `src/client.ts:70-116`, `test/client.test.ts:30-209`
-- Risk: The promise may reject/resolve unpredictably or hang in less common socket failure modes.
-- Priority: Medium
-
-**Custom task validation and workspace trust:**
-
-- What's not tested: Malformed custom task entries, duplicate labels, cancellation after a task list with invalid items, workspace-trust behavior, and user confirmation for dangerous commands.
-- Files: `src/commands/runCustomTask.ts:3-32`, `test/runCustomTask.test.ts:29-74`
-- Risk: Settings mistakes or untrusted workspace settings can execute unintended shell text.
-- Priority: High
-
-**Multi-root workspace behavior:**
-
-- What's not tested: Choosing the active editor’s workspace folder in multi-root projects, active editors outside `workspaceFolders[0]`, or prompting users to choose a root.
-- Files: `src/commands/findFiles.ts:9`, `src/commands/grepFiles.ts:9`, `test/commands.test.ts:113-166`, `test/commands.test.ts:272-309`
-- Risk: Users in multi-root workspaces search the wrong project without a clear indication.
-- Priority: Medium
-
-**Typecheck coverage quirk is resolved, but tests still rely heavily on `any`:**
-
-- What's not tested: The old `AGENTS.md` claim that `test/` is excluded from TypeScript is false; `tsconfig.json` includes both `src` and `test`. However, test mocks use broad `any` casts, so typecheck coverage does not fully validate mock contracts.
-- Files: `AGENTS.md:52`, `tsconfig.json:17-18`, `test/client.test.ts:11`, `test/client.test.ts:40`, `test/client.test.ts:50`, `test/commands.test.ts:408-417`
-- Risk: Mock shapes can drift from real VS Code or Node APIs while `tsc --noEmit` still passes.
-- Priority: Low
-
----
-
-_Concerns audit: 2026-06-23_
+1. **Socket reconnection** with exponential backoff
+2. **Progress indicator** during daemon communication (e.g., `withProgress`)
+3. **`query` field support** — pre-fill the daemon search bar with a pattern from VS Code (depends on th0jensen/fff-gpui#10)
+4. **Cross-platform fallback** if fff-gpui adds Linux/Windows support
+5. **Daemon auto-start** option (opt-in config setting)
