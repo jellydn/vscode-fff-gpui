@@ -2,6 +2,16 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
+## [0.2.3] — 2026-06-23
+
+### Added
+
+- **Show your support section** in README with Ko-fi, PayPal, Buy Me A Coffee badges
+
+### Fixed
+
+- **CI: auto-create git tag + GitHub release on publish** — previously the publish workflow only pushed to marketplaces without creating tags or releases
+
 ## [0.2.2] — 2026-06-23
 
 ### Architecture Deepenings
