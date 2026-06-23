@@ -1,30 +1,9 @@
 import * as fs from 'node:fs'
-import * as net from 'node:net'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { sendSocketMessage } from './ipc'
 import { log } from './logger'
-import type { PickEntry, PickResponse, ServiceCommand } from './types'
-
-function isPickEntry(entry: unknown): entry is PickEntry {
-  if (!entry || typeof entry !== 'object') return false
-
-  const e = entry as Record<string, unknown>
-  if (typeof e.path !== 'string') return false
-  if (e.line !== undefined && e.line !== null && typeof e.line !== 'number') return false
-  if (e.column !== undefined && e.column !== null && typeof e.column !== 'number') return false
-
-  return true
-}
-
-function isPickResponse(value: unknown): value is PickResponse {
-  if (!value || typeof value !== 'object') return false
-
-  const v = value as Record<string, unknown>
-  if (!Array.isArray(v.paths)) return false
-  if (!v.paths.every(isPickEntry)) return false
-
-  return true
-}
+import { isPickResponse, type PickResponse, type ServiceCommand } from './types'
 
 function defaultSocketPath(): string {
   return path.join(os.homedir(), '.local', 'state', 'fff-gpui', 'fff-gpui.sock')
@@ -78,7 +57,7 @@ export function verifySocketSecurity(socketPath: string): void {
   }
 }
 
-export function sendCommand(
+export async function sendCommand(
   command: ServiceCommand,
   socketPathOverride?: string,
   workspaceRoot?: string,
@@ -91,62 +70,39 @@ export function sendCommand(
     return Promise.reject(err)
   }
 
-  return new Promise((resolve, reject) => {
-    const socket = net.createConnection(socketPath)
-    let data = ''
+  let raw: string
+  try {
+    raw = await sendSocketMessage(socketPath, JSON.stringify(command))
+  } catch (err: any) {
+    if (err.code === 'ENOENT' || err.code === 'ECONNREFUSED') {
+      const fileExists = fs.existsSync(socketPath)
+      const detail = fileExists ? 'daemon is not listening' : 'socket file does not exist'
+      throw new Error(
+        `fff-gpui daemon is not running (${detail}). Install with: brew install fff-gpui && brew services start fff-gpui`,
+      )
+    }
+    throw err
+  }
 
-    socket.on('connect', () => {
-      socket.write(`${JSON.stringify(command)}\n`)
-    })
+  if (raw.length === 0) {
+    return { paths: [] }
+  }
 
-    socket.on('data', (chunk: Buffer) => {
-      data += chunk.toString()
-    })
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch (_err) {
+    // Log full payload to output channel; truncate in user-facing message
+    log(`Failed to parse response from fff-gpui daemon: ${raw}`)
+    const preview = raw.length > 100 ? `${raw.slice(0, 100)}…` : raw
+    throw new Error(`Failed to parse response from fff-gpui daemon: ${preview}`)
+  }
 
-    socket.on('end', () => {
-      const trimmed = data.trim()
-      if (trimmed.length === 0) {
-        resolve({ paths: [] })
-        return
-      }
+  if (!isPickResponse(parsed)) {
+    throw new Error(
+      'fff-gpui daemon returned an invalid response (expected { paths: PickEntry[] })',
+    )
+  }
 
-      try {
-        const parsed = JSON.parse(trimmed)
-        if (!isPickResponse(parsed)) {
-          reject(
-            new Error(
-              'fff-gpui daemon returned an invalid response (expected { paths: PickEntry[] })',
-            ),
-          )
-          return
-        }
-        resolve(parsed)
-      } catch (_err) {
-        // Log full payload to output channel; truncate in user-facing message
-        log(`Failed to parse response from fff-gpui daemon: ${trimmed}`)
-        const preview = trimmed.length > 100 ? `${trimmed.slice(0, 100)}…` : trimmed
-        reject(new Error(`Failed to parse response from fff-gpui daemon: ${preview}`))
-      }
-    })
-
-    socket.on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code === 'ENOENT' || err.code === 'ECONNREFUSED') {
-        const fileExists = fs.existsSync(socketPath)
-        const detail = fileExists ? 'daemon is not listening' : 'socket file does not exist'
-        reject(
-          new Error(
-            `fff-gpui daemon is not running (${detail}). Install with: brew install fff-gpui && brew services start fff-gpui`,
-          ),
-        )
-      } else {
-        reject(err)
-      }
-    })
-
-    socket.setTimeout(60_000)
-    socket.on('timeout', () => {
-      socket.destroy()
-      reject(new Error('Connection timed out while waiting for file selection'))
-    })
-  })
+  return parsed
 }
