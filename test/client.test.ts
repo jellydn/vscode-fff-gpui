@@ -128,6 +128,122 @@ describe('sendCommand', () => {
     await expect(promise).rejects.toThrow('fff-gpui daemon is not running')
   })
 
+  it('rejects when response is valid JSON but not a PickResponse (empty object)', async () => {
+    let connectHandler: () => void = () => {}
+    let dataHandler: (chunk: Buffer) => void = () => {}
+    let endHandler: () => void = () => {}
+    MockSocket.on.mockImplementation((event: string, handler: unknown) => {
+      if (event === 'connect') connectHandler = handler as () => void
+      if (event === 'data') dataHandler = handler as (chunk: Buffer) => void
+      if (event === 'end') endHandler = handler as () => void
+    })
+    ;(net.createConnection as any).mockReturnValue(MockSocket)
+
+    const promise = sendCommand({ cmd: 'open_path', path: '/tmp/test' })
+    connectHandler()
+    dataHandler(Buffer.from(JSON.stringify({})))
+    endHandler()
+
+    await expect(promise).rejects.toThrow('invalid response')
+  })
+
+  it('rejects when paths is null', async () => {
+    let connectHandler: () => void = () => {}
+    let dataHandler: (chunk: Buffer) => void = () => {}
+    let endHandler: () => void = () => {}
+    MockSocket.on.mockImplementation((event: string, handler: unknown) => {
+      if (event === 'connect') connectHandler = handler as () => void
+      if (event === 'data') dataHandler = handler as (chunk: Buffer) => void
+      if (event === 'end') endHandler = handler as () => void
+    })
+    ;(net.createConnection as any).mockReturnValue(MockSocket)
+
+    const promise = sendCommand({ cmd: 'open_path', path: '/tmp/test' })
+    connectHandler()
+    dataHandler(Buffer.from(JSON.stringify({ paths: null })))
+    endHandler()
+
+    await expect(promise).rejects.toThrow('invalid response')
+  })
+
+  it('rejects when an entry is missing path', async () => {
+    let connectHandler: () => void = () => {}
+    let dataHandler: (chunk: Buffer) => void = () => {}
+    let endHandler: () => void = () => {}
+    MockSocket.on.mockImplementation((event: string, handler: unknown) => {
+      if (event === 'connect') connectHandler = handler as () => void
+      if (event === 'data') dataHandler = handler as (chunk: Buffer) => void
+      if (event === 'end') endHandler = handler as () => void
+    })
+    ;(net.createConnection as any).mockReturnValue(MockSocket)
+
+    const promise = sendCommand({ cmd: 'open_path', path: '/tmp/test' })
+    connectHandler()
+    dataHandler(Buffer.from(JSON.stringify({ paths: [{ line: 1 }] })))
+    endHandler()
+
+    await expect(promise).rejects.toThrow('invalid response')
+  })
+
+  it('rejects when an entry path is not a string', async () => {
+    let connectHandler: () => void = () => {}
+    let dataHandler: (chunk: Buffer) => void = () => {}
+    let endHandler: () => void = () => {}
+    MockSocket.on.mockImplementation((event: string, handler: unknown) => {
+      if (event === 'connect') connectHandler = handler as () => void
+      if (event === 'data') dataHandler = handler as (chunk: Buffer) => void
+      if (event === 'end') endHandler = handler as () => void
+    })
+    ;(net.createConnection as any).mockReturnValue(MockSocket)
+
+    const promise = sendCommand({ cmd: 'open_path', path: '/tmp/test' })
+    connectHandler()
+    dataHandler(Buffer.from(JSON.stringify({ paths: [{ path: 123 }] })))
+    endHandler()
+
+    await expect(promise).rejects.toThrow('invalid response')
+  })
+
+  it('rejects when entry has non-numeric line', async () => {
+    let connectHandler: () => void = () => {}
+    let dataHandler: (chunk: Buffer) => void = () => {}
+    let endHandler: () => void = () => {}
+    MockSocket.on.mockImplementation((event: string, handler: unknown) => {
+      if (event === 'connect') connectHandler = handler as () => void
+      if (event === 'data') dataHandler = handler as (chunk: Buffer) => void
+      if (event === 'end') endHandler = handler as () => void
+    })
+    ;(net.createConnection as any).mockReturnValue(MockSocket)
+
+    const promise = sendCommand({ cmd: 'open_path', path: '/tmp/test' })
+    connectHandler()
+    dataHandler(Buffer.from(JSON.stringify({ paths: [{ path: '/ok.ts', line: 'not-a-number' }] })))
+    endHandler()
+
+    await expect(promise).rejects.toThrow('invalid response')
+  })
+
+  it('accepts entry with string path and numeric line/column', async () => {
+    let connectHandler: () => void = () => {}
+    let dataHandler: (chunk: Buffer) => void = () => {}
+    let endHandler: () => void = () => {}
+    MockSocket.on.mockImplementation((event: string, handler: unknown) => {
+      if (event === 'connect') connectHandler = handler as () => void
+      if (event === 'data') dataHandler = handler as (chunk: Buffer) => void
+      if (event === 'end') endHandler = handler as () => void
+    })
+    ;(net.createConnection as any).mockReturnValue(MockSocket)
+
+    const promise = sendCommand({ cmd: 'open_path', path: '/tmp/test' })
+    connectHandler()
+    dataHandler(Buffer.from(JSON.stringify({ paths: [{ path: '/ok.ts', line: 5, column: 3 }] })))
+    endHandler()
+
+    await expect(promise).resolves.toEqual({
+      paths: [{ path: '/ok.ts', line: 5, column: 3 }],
+    })
+  })
+
   it('rejects on invalid JSON response', async () => {
     let connectHandler: () => void = () => {}
     let dataHandler: (chunk: Buffer) => void = () => {}

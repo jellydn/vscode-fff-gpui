@@ -2,7 +2,28 @@ import * as fs from 'node:fs'
 import * as net from 'node:net'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import type { PickResponse, ServiceCommand } from './types'
+import type { PickEntry, PickResponse, ServiceCommand } from './types'
+
+function isPickEntry(entry: unknown): entry is PickEntry {
+  if (!entry || typeof entry !== 'object') return false
+
+  const e = entry as Record<string, unknown>
+  if (typeof e.path !== 'string') return false
+  if (e.line !== undefined && e.line !== null && typeof e.line !== 'number') return false
+  if (e.column !== undefined && e.column !== null && typeof e.column !== 'number') return false
+
+  return true
+}
+
+function isPickResponse(value: unknown): value is PickResponse {
+  if (!value || typeof value !== 'object') return false
+
+  const v = value as Record<string, unknown>
+  if (!Array.isArray(v.paths)) return false
+  if (!v.paths.every(isPickEntry)) return false
+
+  return true
+}
 
 function defaultSocketPath(): string {
   return path.join(os.homedir(), '.local', 'state', 'fff-gpui', 'fff-gpui.sock')
@@ -87,8 +108,16 @@ export function sendCommand(
       }
 
       try {
-        const response: PickResponse = JSON.parse(trimmed)
-        resolve(response)
+        const parsed = JSON.parse(trimmed)
+        if (!isPickResponse(parsed)) {
+          reject(
+            new Error(
+              'fff-gpui daemon returned an invalid response (expected { paths: PickEntry[] })',
+            ),
+          )
+          return
+        }
+        resolve(parsed)
       } catch (err) {
         reject(new Error(`Failed to parse response from fff-gpui daemon: ${trimmed}`))
       }
