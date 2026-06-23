@@ -14,9 +14,9 @@ vi.mock('vscode', () => ({
 }))
 
 beforeEach(() => {
-  vi.clearAllMocks()
-  // Reset module-level state so each test starts fresh
+  // Reset module-level state before clearing mocks to avoid mock pollution
   disposeLogger()
+  vi.clearAllMocks()
   createOutputChannelMock.mockReturnValue({
     appendLine: appendLineMock,
     dispose: disposeMock,
@@ -58,8 +58,7 @@ describe('disposeLogger', () => {
     log('create channel')
     disposeLogger()
 
-    // disposeLogger is called twice: once in beforeEach, once in the test
-    expect(disposeMock).toHaveBeenCalled()
+    expect(disposeMock).toHaveBeenCalledTimes(1)
   })
 
   it('creates a new channel after dispose on next log call', () => {

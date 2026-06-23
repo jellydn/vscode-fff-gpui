@@ -9,6 +9,7 @@ const {
   showWarningMessageMock,
   showTextDocumentMock,
   openTextDocumentMock,
+  createOutputChannelMock,
   mockState,
 } = vi.hoisted(() => ({
   sendCommandMock: vi.fn(),
@@ -17,6 +18,7 @@ const {
   showWarningMessageMock: vi.fn(),
   showTextDocumentMock: vi.fn(),
   openTextDocumentMock: vi.fn(),
+  createOutputChannelMock: vi.fn(),
   mockState: {
     workspaceFolders: undefined as readonly { uri: { fsPath: string } }[] | undefined,
     activeTextEditor: undefined as
@@ -44,10 +46,6 @@ vi.mock('../src/logger', () => ({
 
 vi.mock('node:os', () => ({
   homedir: () => '/mock/home',
-}))
-
-const { createOutputChannelMock } = vi.hoisted(() => ({
-  createOutputChannelMock: vi.fn(),
 }))
 
 vi.mock('vscode', () => {
@@ -484,6 +482,9 @@ describe('openFiles', () => {
 
     await expect(openFiles(entries)).resolves.toBeUndefined()
     expect(showTextDocumentMock).toHaveBeenCalledTimes(3)
+
+    const { log } = await import('../src/logger')
+    expect(log).toHaveBeenCalledWith('failed to show document: Error: Editor closed')
   })
 
   it('clamps line: 0 to index 0', async () => {
