@@ -14,8 +14,11 @@
 | `test/client.test.ts`            | 19    | Protocol client — sendCommand, response validation, socket path resolution, security        |
 | `test/commands.test.ts`          | 20    | Command handlers, search path resolution, file opening, cursor positioning, fault tolerance |
 | `test/resolveSearchPath.test.ts` | 6     | Pure path resolution cascade — Workspace Root → editor dir → homedir                        |
+| `test/types.test.ts`             | 23    | Pure type guard validation — `isPickEntry` (12), `isPickResponse` (11), zero mocks          |
 
-**Total**: 68 tests across 4 files
+| `test/types.test.ts` | 23 | Pure type guard validation — `isPickEntry` (12), `isPickResponse` (11), zero mocks |
+
+**Total**: 91 tests across 5 files
 
 ## Test Structure
 
@@ -116,6 +119,27 @@
 - Uses first workspace folder when multiple exist
 - Prefers workspace folder over active editor when both are available
 
+### test/types.test.ts
+
+- **Mocked modules**: _none_ — pure function tests
+- **Test suite**: `isPickEntry`, `isPickResponse`
+
+#### isPickEntry tests (12)
+
+- Returns false for null, non-objects (string/number/boolean/undefined)
+- Returns false when path is missing or not a string (number/null/boolean/object)
+- Returns false when line is present but not a number (string/boolean/object)
+- Returns false when column is present but not a number
+- Returns true for valid entries: path only, path+line, path+line+column
+- Edge cases: null line (accepted), null column (accepted), line: 0 (valid)
+
+#### isPickResponse tests (11)
+
+- Returns false for null, non-objects
+- Returns false when paths is missing, null, or not an array
+- Returns true for empty paths array, single valid entry, multiple valid entries
+- Returns false when any entry is invalid: non-string path, missing path, non-numeric line
+
 ## Mocking Pattern
 
 ### Hoisted State Pattern (used in commands.test.ts)
@@ -168,3 +192,5 @@ Run from CI: `pnpm lint && pnpm typecheck && pnpm test`
 - All search path fallbacks are tested
 - Fault tolerance (partial failure, all-fail, show failures) is tested
 - Edge cases (line: 0, non-file scheme, empty config) covered
+- Pure function tests (types, resolveSearchPath): zero mocks, full branch coverage
+- All exported type guards (`isPickEntry`, `isPickResponse`) have dedicated test suites
