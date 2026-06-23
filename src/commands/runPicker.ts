@@ -25,7 +25,7 @@ export async function runPicker(options: PickerOptions): Promise<void> {
         path: searchPath,
         in_grep: options.inGrep,
       },
-      getSocketPath() || undefined,
+      getSocketPath(),
       searchPath,
     )
     await openFiles(response.paths)
