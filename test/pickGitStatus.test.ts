@@ -67,6 +67,7 @@ vi.mock('vscode', () => ({
   },
 }))
 
+import * as vscode from 'vscode'
 import { pickGitStatus } from '../src/commands/pickGitStatus'
 
 describe('pickGitStatus', () => {
@@ -75,6 +76,7 @@ describe('pickGitStatus', () => {
     getSocketPathMock.mockReturnValue('')
     sendCommandMock.mockResolvedValue({ paths: [] })
     fsMock.statSync.mockReturnValue({ isDirectory: () => true })
+    ;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: '/mock/workspace' } }]
     execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
@@ -191,6 +193,115 @@ describe('pickGitStatus', () => {
     expect(fsMock.linkSync).toHaveBeenCalledWith(
       expect.stringContaining('new.ts'),
       expect.stringContaining('new.ts'),
+    )
+  })
+
+  it('shows error message when no workspace folder is open', async () => {
+    ;(vscode.workspace as any).workspaceFolders = undefined
+
+    await pickGitStatus()
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'fff-gpui: Git Status requires an open workspace folder.',
+    )
+    expect(execFileMock).not.toHaveBeenCalled()
+  })
+
+  it('shows error message when sendCommand throws', async () => {
+    sendCommandMock.mockRejectedValue(new Error('daemon not running'))
+
+    await pickGitStatus()
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith('fff-gpui: Error: daemon not running')
+    // Cleanup should still run even on error
+    expect(fsMock.rmSync).toHaveBeenCalled()
+  })
+
+  it('filters out deleted files from git status', async () => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
+      const cb = typeof options === 'function' ? options : callback
+      let stdout = ''
+      if (file === 'git') {
+        if (args[0] === 'rev-parse') {
+          stdout = '/mock/workspace\n'
+        } else if (args[0] === 'status') {
+          stdout = ' M src/modified.ts\n D src/deleted.ts\n?? src/untracked.ts\n'
+        }
+      }
+      cb(null, { stdout, stderr: '' })
+    })
+
+    sendCommandMock.mockImplementation(async (command: { path: string }) => ({
+      paths: [{ path: path.join(command.path, 'src/modified.ts') }],
+    }))
+
+    openTextDocumentMock.mockResolvedValue({ uri: { fsPath: '/mock/workspace/src/modified.ts' } })
+
+    await pickGitStatus()
+
+    // Deleted file should not be linked
+    // Each call to linkSync for the first arg (destPath) should NOT contain 'deleted.ts'
+    const linkCalls = (fsMock.linkSync as ReturnType<typeof vi.fn>).mock.calls
+    for (const call of linkCalls) {
+      expect(call[0]).not.toContain('deleted.ts')
+    }
+
+    // Modified and untracked should be linked (from status output + ls-files)
+    const allLinkedFiles = linkCalls.map((c: string[]) => c[0])
+    expect(allLinkedFiles.some((f) => f?.includes('modified.ts'))).toBe(true)
+  })
+
+  it('filters out files outside workspace root', async () => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
+      const cb = typeof options === 'function' ? options : callback
+      let stdout = ''
+      if (file === 'git') {
+        if (args[0] === 'rev-parse') {
+          stdout = '/other/repo\n'
+        } else if (args[0] === 'status') {
+          stdout = ' M ../outside.ts\n'
+        }
+      }
+      cb(null, { stdout, stderr: '' })
+    })
+
+    await pickGitStatus()
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith('No changes in the git repository.')
+    expect(sendCommandMock).not.toHaveBeenCalled()
+  })
+
+  it('opens multiple files when user selects several entries', async () => {
+    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
+      const cb = typeof options === 'function' ? options : callback
+      let stdout = ''
+      if (file === 'git') {
+        if (args[0] === 'rev-parse') {
+          stdout = '/mock/workspace\n'
+        } else if (args[0] === 'status') {
+          stdout = ' M src/a.ts\n M src/b.ts\n'
+        }
+      }
+      cb(null, { stdout, stderr: '' })
+    })
+
+    sendCommandMock.mockImplementation(async (command: { path: string }) => ({
+      paths: [
+        { path: path.join(command.path, 'src/a.ts') },
+        { path: path.join(command.path, 'src/b.ts') },
+      ],
+    }))
+
+    openTextDocumentMock.mockResolvedValue({ uri: { fsPath: '/mock/workspace/src/a.ts' } })
+
+    await pickGitStatus()
+
+    expect(openTextDocumentMock).toHaveBeenCalledTimes(2)
+    expect(openTextDocumentMock).toHaveBeenCalledWith(
+      expect.objectContaining({ fsPath: '/mock/workspace/src/a.ts' }),
+    )
+    expect(openTextDocumentMock).toHaveBeenCalledWith(
+      expect.objectContaining({ fsPath: '/mock/workspace/src/b.ts' }),
     )
   })
 

@@ -67,6 +67,7 @@ vi.mock('vscode', () => ({
   },
 }))
 
+import * as vscode from 'vscode'
 import { findTodoFixme } from '../src/commands/findTodoFixme'
 
 describe('findTodoFixme', () => {
@@ -75,6 +76,7 @@ describe('findTodoFixme', () => {
     getSocketPathMock.mockReturnValue('')
     sendCommandMock.mockResolvedValue({ paths: [] })
     fsMock.statSync.mockReturnValue({ isDirectory: () => true })
+    ;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: '/mock/workspace' } }]
     execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
@@ -152,6 +154,60 @@ describe('findTodoFixme', () => {
 
     expect(showInformationMessageMock).toHaveBeenCalledWith('No TODO/FIXME comments found.')
     expect(sendCommandMock).not.toHaveBeenCalled()
+  })
+
+  it('shows error message when no workspace folder is open', async () => {
+    ;(vscode.workspace as any).workspaceFolders = undefined
+
+    await findTodoFixme()
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'fff-gpui: TODO search requires an open workspace folder.',
+    )
+    expect(execFileMock).not.toHaveBeenCalled()
+  })
+
+  it('shows error message when sendCommand throws', async () => {
+    sendCommandMock.mockRejectedValue(new Error('daemon not running'))
+
+    await findTodoFixme()
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith('fff-gpui: Error: daemon not running')
+    // Cleanup should still run even on error
+    expect(fsMock.rmSync).toHaveBeenCalled()
+  })
+
+  it('opens multiple files when user selects several entries', async () => {
+    const files = ['src/a.ts', 'src/b.ts', 'src/c.ts']
+
+    execFileMock.mockImplementation(
+      (_file: string, _args: string[], _options: any, callback: any) => {
+        callback(null, { stdout: files.join('\n'), stderr: '' })
+      },
+    )
+
+    sendCommandMock.mockImplementation(async (command: { path: string }) => ({
+      paths: [
+        { path: path.join(command.path, 'src/a.ts') },
+        { path: path.join(command.path, 'src/b.ts') },
+        { path: path.join(command.path, 'src/c.ts') },
+      ],
+    }))
+
+    openTextDocumentMock.mockResolvedValue({ uri: { fsPath: '/mock/workspace/src/a.ts' } })
+
+    await findTodoFixme()
+
+    expect(openTextDocumentMock).toHaveBeenCalledTimes(3)
+    expect(openTextDocumentMock).toHaveBeenCalledWith(
+      expect.objectContaining({ fsPath: '/mock/workspace/src/a.ts' }),
+    )
+    expect(openTextDocumentMock).toHaveBeenCalledWith(
+      expect.objectContaining({ fsPath: '/mock/workspace/src/b.ts' }),
+    )
+    expect(openTextDocumentMock).toHaveBeenCalledWith(
+      expect.objectContaining({ fsPath: '/mock/workspace/src/c.ts' }),
+    )
   })
 
   it('falls back to workspace root when .git is not a directory', async () => {
