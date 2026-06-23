@@ -4,4 +4,5 @@ hooks = [
   { id = "biome-lint", name = "biome check", entry = "pnpm biome check --write --no-errors-on-unmatched", language = "system", types = ["ts"] },
   { id = "tsc-typecheck", name = "tsc typecheck", entry = "pnpm tsc --noEmit", language = "system", pass_filenames = false },
   { id = "vitest", name = "vitest run", entry = "pnpm vitest run", language = "system", pass_filenames = false },
+  { id = "oxfmt", name = "oxfmt markdown", entry = "oxfmt --write", language = "system", types = ["markdown"] },
 ]

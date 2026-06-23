@@ -2,18 +2,28 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
+## [0.1.6] — 2026-06-23
+
+### Fixed
+
+- CI publish: correct Azure DevOps PAT scope (Marketplace → Manage) and explicit `registryUrl` for VS Code Marketplace (0.1.5 was an unpublished CI attempt)
+
 ## [0.1.4] — 2026-06-23
 
 ### Added
+
 - **Pick from Git Status** command (`Cmd+K Cmd+S`) — fuzzy-pick modified, staged, and untracked files from `git status`
 - **Find TODO/FIXME** command (`Cmd+K Cmd+T`) — search TODO, FIXME, HACK, and FIX comments via ripgrep, open matches in fff-gpui
 
-### Fixed
-- CI publish workflow: switch from Entra ID OIDC to PAT-based auth with version-bump gate (stabilized across 0.1.4–0.1.6)
+### Changed
+
+- CI publish: switch from Entra ID OIDC to PAT-based auth with version-bump gate
+- README: add new commands to the commands table and keybindings
 
 ## [0.1.2] — 2026-06-23
 
 ### Fixed
+
 - Correct marketplace links to use `vscode-fff-gpui` extension ID (was `fff-gpui`)
 
 ## [0.1.1] — 2026-06-23
@@ -21,6 +31,7 @@ All notable changes to the "vscode-fff-gpui" extension will be documented in thi
 _Initial marketplace release._
 
 ### Added
+
 - **Find Files** command (`Cmd+K Cmd+P`) — fuzzy file search with frecency ranking via fff-gpui daemon
 - **Grep Files** command (`Cmd+K Cmd+F`) — live grep with plain text, regex, and fuzzy modes
 - Unix socket IPC client to communicate with the fff-gpui background daemon
@@ -38,6 +49,7 @@ _Initial marketplace release._
 _Pre-release (not published to marketplaces)._
 
 ### Added
+
 - Initial extension scaffold with reactive-vscode lifecycle
 - Unix socket IPC client with JSON protocol
 - `fff-gpui.findFiles` and `fff-gpui.grepFiles` commands
