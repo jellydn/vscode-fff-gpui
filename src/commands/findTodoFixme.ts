@@ -12,43 +12,25 @@ const execFileAsync = promisify(execFile)
 async function getTodoFiles(workspaceRoot: string): Promise<string[]> {
   try {
     const { stdout } = await execFileAsync(
-      'rg',
+      'git',
       [
+        'grep',
+        '--untracked',
         '-l',
         '-w',
+        '-E',
         '-e',
         '(TODO|FIXME|HACK|FIX)',
         '-e',
-        '(todo|fixme|hack|fix)(:|\\s+-|\\s*\\()',
+        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
         '.',
       ],
       { cwd: workspaceRoot },
     )
     return stdout.split('\n').filter(Boolean)
-  } catch (rgErr) {
-    log(`rg search failed or no matches found, falling back to git grep: ${rgErr}`)
-    try {
-      // Fallback searches tracked git files.
-      const { stdout } = await execFileAsync(
-        'git',
-        [
-          'grep',
-          '-l',
-          '-w',
-          '-E',
-          '-e',
-          '(TODO|FIXME|HACK|FIX)',
-          '-e',
-          '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
-          '.',
-        ],
-        { cwd: workspaceRoot },
-      )
-      return stdout.split('\n').filter(Boolean)
-    } catch (gitErr) {
-      log(`git grep search failed or no matches found: ${gitErr}`)
-      return []
-    }
+  } catch (err) {
+    log(`git grep search failed or no matches found: ${err}`)
+    return []
   }
 }
 

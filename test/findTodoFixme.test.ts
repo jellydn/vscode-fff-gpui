@@ -78,14 +78,14 @@ describe('findTodoFixme', () => {
     execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
       const cb = typeof options === 'function' ? options : callback
       let stdout = ''
-      if (file === 'rg') {
+      if (file === 'git') {
         stdout = 'src/extension.ts\nsrc/client.ts\n'
       }
       cb(null, { stdout, stderr: '' })
     })
   })
 
-  it('runs rg command with dot path, creates overlay, spawns fff-gpui with in_grep: true, and cleans up', async () => {
+  it('runs git grep command with --untracked and dot path, creates overlay, spawns fff-gpui in file finder mode, and cleans up', async () => {
     sendCommandMock.mockImplementation(async (command) => ({
       paths: [{ path: path.join(command.path, 'src/client.ts') }],
     }))
@@ -94,16 +94,19 @@ describe('findTodoFixme', () => {
 
     await findTodoFixme()
 
-    // Verify rg call uses execFile and explicitly passes path argument '.' to prevent hanging
+    // Verify git grep is called with aligned pattern and dot path
     expect(execFileMock).toHaveBeenCalledWith(
-      'rg',
+      'git',
       [
+        'grep',
+        '--untracked',
         '-l',
         '-w',
+        '-E',
         '-e',
         '(TODO|FIXME|HACK|FIX)',
         '-e',
-        '(todo|fixme|hack|fix)(:|\\s+-|\\s*\\()',
+        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
         '.',
       ],
       expect.any(Object),
@@ -136,37 +139,6 @@ describe('findTodoFixme', () => {
     expect(fsMock.rmSync).toHaveBeenCalledWith(
       expect.stringContaining(path.join('/mock/workspace', '.git', '.fff-gpui-temp-')),
       { recursive: true, force: true },
-    )
-  })
-
-  it('falls back to git grep if rg fails', async () => {
-    execFileMock.mockImplementation((file: string, args: string[], options: any, callback: any) => {
-      const cb = typeof options === 'function' ? options : callback
-      if (file === 'rg') {
-        cb(new Error('rg not found'), null)
-      } else if (file === 'git') {
-        cb(null, { stdout: 'src/extension.ts\n', stderr: '' })
-      }
-    })
-
-    await findTodoFixme()
-
-    // Verify git grep is called with aligned pattern and dot path
-    expect(execFileMock).toHaveBeenCalledWith(
-      'git',
-      [
-        'grep',
-        '-l',
-        '-w',
-        '-E',
-        '-e',
-        '(TODO|FIXME|HACK|FIX)',
-        '-e',
-        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
-        '.',
-      ],
-      expect.any(Object),
-      expect.any(Function),
     )
   })
 
