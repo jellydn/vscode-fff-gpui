@@ -5,6 +5,17 @@ on:
     tags:
       - 'v*'
 
+# Azure OIDC setup (one-time per repo):
+#   1. Create an App Registration in Azure Portal (portal.azure.com)
+#   2. Add federated credential for GitHub Actions (repo: jellydn/vscode-fff-gpui)
+#   3. Add the managed identity to your VS Code Marketplace publisher
+#   4. Set GitHub variables: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+#   Docs: https://code.visualstudio.com/api/working-with-extensions/publishing-extension
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -42,9 +53,12 @@ jobs:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           extensionFile: ${{ env.VSIX }}
 
-      - name: Publish to VS Code Marketplace
-        uses: HaaLeo/publish-vscode-extension@v1
+      - name: Azure login (Entra ID OIDC)
+        uses: azure/login@v2
         with:
-          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
-          registryUrl: https://marketplace.visualstudio.com
-          extensionFile: ${{ env.VSIX }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publish to VS Code Marketplace
+        run: npx vsce publish --packagePath ${{ env.VSIX }} --azure-credential
