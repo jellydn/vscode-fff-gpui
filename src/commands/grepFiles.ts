@@ -17,6 +17,10 @@ export async function grepFiles(): Promise<void> {
   }
 
   try {
+    vscode.window.setStatusBarMessage(
+      'Tip: type a search pattern in the grep bar — plain text, regex, or fuzzy modes available',
+      8000,
+    )
     const response = await sendCommand(
       {
         cmd: 'open_path',

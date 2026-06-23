@@ -17,6 +17,10 @@ export async function findFiles(): Promise<void> {
   }
 
   try {
+    vscode.window.setStatusBarMessage(
+      'Tip: type globs like **/*.ts or git:modified in the search bar to filter',
+      8000,
+    )
     const response = await sendCommand(
       {
         cmd: 'open_path',

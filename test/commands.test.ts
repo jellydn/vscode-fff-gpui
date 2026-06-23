@@ -71,6 +71,7 @@ vi.mock('vscode', () => {
       },
       showErrorMessage: showErrorMessageMock,
       showTextDocument: showTextDocumentMock,
+      setStatusBarMessage: vi.fn(),
     },
     Uri: {
       file: (p: string) => ({
