@@ -19,9 +19,13 @@
   },
   "activationEvents": [
     "onCommand:fff-gpui.findFiles",
+    "onCommand:fff-gpui.findFilesWithType",
     "onCommand:fff-gpui.grepFiles",
+    "onCommand:fff-gpui.grepFilesWithType",
     "onCommand:fff-gpui.pickFileFromGitStatus",
-    "onCommand:fff-gpui.findTodoFixme"
+    "onCommand:fff-gpui.findTodoFixme",
+    "onCommand:fff-gpui.resumeSearch",
+    "onCommand:fff-gpui.runCustomTask"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -31,8 +35,16 @@
         "title": "fff-gpui: Find Files"
       },
       {
+        "command": "fff-gpui.findFilesWithType",
+        "title": "fff-gpui: Find Files (with type filter)"
+      },
+      {
         "command": "fff-gpui.grepFiles",
         "title": "fff-gpui: Grep Files"
+      },
+      {
+        "command": "fff-gpui.grepFilesWithType",
+        "title": "fff-gpui: Grep Files (with type filter)"
       },
       {
         "command": "fff-gpui.pickFileFromGitStatus",
@@ -41,6 +53,14 @@
       {
         "command": "fff-gpui.findTodoFixme",
         "title": "fff-gpui: Find TODO/FIXME"
+      },
+      {
+        "command": "fff-gpui.resumeSearch",
+        "title": "fff-gpui: Resume Last Search"
+      },
+      {
+        "command": "fff-gpui.runCustomTask",
+        "title": "fff-gpui: Run Custom Task"
       }
     ],
     "keybindings": [
@@ -50,9 +70,19 @@
         "mac": "cmd+k cmd+p"
       },
       {
+        "command": "fff-gpui.findFilesWithType",
+        "key": "cmd+k shift+p",
+        "mac": "cmd+k shift+p"
+      },
+      {
         "command": "fff-gpui.grepFiles",
         "key": "cmd+k cmd+f",
         "mac": "cmd+k cmd+f"
+      },
+      {
+        "command": "fff-gpui.grepFilesWithType",
+        "key": "cmd+k shift+f",
+        "mac": "cmd+k shift+f"
       },
       {
         "command": "fff-gpui.pickFileFromGitStatus",
@@ -63,6 +93,11 @@
         "command": "fff-gpui.findTodoFixme",
         "key": "cmd+k cmd+t",
         "mac": "cmd+k cmd+t"
+      },
+      {
+        "command": "fff-gpui.resumeSearch",
+        "key": "cmd+k cmd+r",
+        "mac": "cmd+k cmd+r"
       }
     ],
     "configuration": {
@@ -72,6 +107,24 @@
           "type": "string",
           "default": "",
           "description": "Custom Unix socket path for the fff-gpui daemon (auto-detected from $HOME if empty)"
+        },
+        "fff-gpui.customTasks": {
+          "type": "array",
+          "default": [],
+          "description": "Custom shell tasks to run via 'fff-gpui: Run Custom Task'",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Display name for the task"
+              },
+              "command": {
+                "type": "string",
+                "description": "Shell command to execute"
+              }
+            }
+          }
         }
       }
     }
