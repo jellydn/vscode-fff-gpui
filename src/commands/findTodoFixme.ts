@@ -11,10 +11,17 @@ const execFileAsync = promisify(execFile)
 
 async function getTodoFiles(workspaceRoot: string): Promise<string[]> {
   try {
-    // ripgrep pattern with trailing whitespace match
     const { stdout } = await execFileAsync(
       'rg',
-      ['-l', '--smart-case', '(TODO|FIXME|HACK|FIX):\\s', '.'],
+      [
+        '-l',
+        '-w',
+        '-e',
+        '(TODO|FIXME|HACK|FIX)',
+        '-e',
+        '(todo|fixme|hack|fix)(:|\\s+-|\\s*\\()',
+        '.',
+      ],
       { cwd: workspaceRoot },
     )
     return stdout.split('\n').filter(Boolean)
@@ -22,11 +29,19 @@ async function getTodoFiles(workspaceRoot: string): Promise<string[]> {
     log(`rg search failed or no matches found, falling back to git grep: ${rgErr}`)
     try {
       // Fallback searches tracked git files.
-      // git grep supports -E (extended regex), -l (files with matches), and -i (case-insensitive)
-      // We use [[:space:]] for POSIX ERE compatibility to match whitespace
       const { stdout } = await execFileAsync(
         'git',
-        ['grep', '-l', '-i', '-E', '(TODO|FIXME|HACK|FIX):[[:space:]]', '.'],
+        [
+          'grep',
+          '-l',
+          '-w',
+          '-E',
+          '-e',
+          '(TODO|FIXME|HACK|FIX)',
+          '-e',
+          '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
+          '.',
+        ],
         { cwd: workspaceRoot },
       )
       return stdout.split('\n').filter(Boolean)

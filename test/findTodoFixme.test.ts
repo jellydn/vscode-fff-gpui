@@ -97,7 +97,15 @@ describe('findTodoFixme', () => {
     // Verify rg call uses execFile and explicitly passes path argument '.' to prevent hanging
     expect(execFileMock).toHaveBeenCalledWith(
       'rg',
-      ['-l', '--smart-case', '(TODO|FIXME|HACK|FIX):\\s', '.'],
+      [
+        '-l',
+        '-w',
+        '-e',
+        '(TODO|FIXME|HACK|FIX)',
+        '-e',
+        '(todo|fixme|hack|fix)(:|\\s+-|\\s*\\()',
+        '.',
+      ],
       expect.any(Object),
       expect.any(Function),
     )
@@ -146,7 +154,17 @@ describe('findTodoFixme', () => {
     // Verify git grep is called with aligned pattern and dot path
     expect(execFileMock).toHaveBeenCalledWith(
       'git',
-      ['grep', '-l', '-i', '-E', '(TODO|FIXME|HACK|FIX):[[:space:]]', '.'],
+      [
+        'grep',
+        '-l',
+        '-w',
+        '-E',
+        '-e',
+        '(TODO|FIXME|HACK|FIX)',
+        '-e',
+        '(todo|fixme|hack|fix)(:|[[:space:]]+-|[[:space:]]*\\()',
+        '.',
+      ],
       expect.any(Object),
       expect.any(Function),
     )
