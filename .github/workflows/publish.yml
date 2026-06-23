@@ -2,8 +2,8 @@ name: Publish
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 # 🪪 One-time Azure OIDC setup (run these commands once):
 #
@@ -16,8 +16,8 @@ on:
 #     --parameters '{
 #       "name": "github-actions-publish",
 #       "issuer": "https://token.actions.githubusercontent.com",
-#       "subject": "repo:jellydn/vscode-fff-gpui:ref:refs/tags/*",
-#       "description": "OIDC trust for tag-triggered publish workflow",
+#       "subject": "repo:jellydn/vscode-fff-gpui:ref:refs/heads/main",
+#       "description": "OIDC trust for main-branch publish workflow",
 #       "audiences": ["api://AzureADTokenExchange"]
 #     }'
 #
@@ -67,16 +67,33 @@ jobs:
 
       - run: pnpm package
 
+      - name: Check if version changed
+        id: version-check
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          OLD_VERSION=$(git show HEAD~1:package.json 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version" || echo "")
+          echo "new=$NEW_VERSION" >> $GITHUB_OUTPUT
+          if [ "$NEW_VERSION" != "$OLD_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version bumped: $OLD_VERSION → $NEW_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged ($NEW_VERSION) — skipping publish"
+          fi
+
       - name: Set VSIX filename
-        run: echo "VSIX=vscode-fff-gpui-$(node -p "require('./package.json').version").vsix" >> $GITHUB_ENV
+        if: steps.version-check.outputs.changed == 'true'
+        run: echo "VSIX=vscode-fff-gpui-${{ steps.version-check.outputs.new }}.vsix" >> $GITHUB_ENV
 
       - name: Publish to Open VSX Registry
+        if: steps.version-check.outputs.changed == 'true'
         uses: HaaLeo/publish-vscode-extension@v1
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           extensionFile: ${{ env.VSIX }}
 
       - name: Azure login (Entra ID OIDC)
+        if: steps.version-check.outputs.changed == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -84,4 +101,5 @@ jobs:
           allow-no-subscriptions: true
 
       - name: Publish to VS Code Marketplace
+        if: steps.version-check.outputs.changed == 'true'
         run: npx vsce publish --packagePath ${{ env.VSIX }} --azure-credential
