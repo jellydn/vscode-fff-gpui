@@ -40,11 +40,13 @@ brew services start fff-gpui
 ## 🚀 Getting Started
 
 Once the daemon is running, open a project in VS Code and use:- **Cmd+K Cmd+P** — Find files
+
 - **Cmd+K Cmd+F** — Grep file contents
 - **Cmd+K Cmd+S** — Pick from Git status
 - **Cmd+K Cmd+T** — Find TODO/FIXME comments
 
 Or open the Command Palette (`Cmd+Shift+P`) and run:
+
 - `fff-gpui: Find Files`
 - `fff-gpui: Grep Files`
 - `fff-gpui: Pick from Git Status`
@@ -54,26 +56,28 @@ The picker window opens scoped to your workspace root. Without a workspace, it f
 
 ## ⌨️ Commands
 
-| Command | Title |
-|---------|-------|
-| `fff-gpui.findFiles` | fff-gpui: Find Files |
-| `fff-gpui.grepFiles` | fff-gpui: Grep Files |
+| Command                          | Title                          |
+| -------------------------------- | ------------------------------ |
+| `fff-gpui.findFiles`             | fff-gpui: Find Files           |
+| `fff-gpui.grepFiles`             | fff-gpui: Grep Files           |
 | `fff-gpui.pickFileFromGitStatus` | fff-gpui: Pick from Git Status |
-| `fff-gpui.findTodoFixme` | fff-gpui: Find TODO/FIXME |
+| `fff-gpui.findTodoFixme`         | fff-gpui: Find TODO/FIXME      |
 
 ## ⚙️ Configuration
 
-| Key | Description | Type | Default |
-|-----|-------------|------|---------|
+| Key                   | Description                                     | Type     | Default                           |
+| --------------------- | ----------------------------------------------- | -------- | --------------------------------- |
 | `fff-gpui.socketPath` | Custom Unix socket path for the fff-gpui daemon | `string` | `""` (auto-detected from `$HOME`) |
 
 > The socket path defaults to `~/.local/state/fff-gpui/fff-gpui.sock`. Only set this if you've configured fff-gpui with a custom socket location.
 >
 > The path supports variable expansion:
+>
 > - `${workspaceFolder}` — replaced with the current workspace root path
 > - `~` — replaced with your home directory
 >
 > **Examples:**
+>
 > - `${workspaceFolder}/.fff-gpui.sock` — per-project socket
 > - `~/custom/fff-gpui.sock` — home-relative path
 

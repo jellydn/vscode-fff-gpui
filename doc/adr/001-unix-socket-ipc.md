@@ -41,10 +41,10 @@ We connect to the daemon socket, send `{"cmd":"open_path","path":"<workspace>","
 
 ### Comparison
 
-| Approach | Editor spawning | Process mgmt | Shared index | Protocol complexity |
-|----------|----------------|-------------|-------------|-------------------|
-| CLI child process | Via `$EDITOR` | Need to manage | Yes (daemon) | CLI args + stdout parse |
-| Direct socket | Extension controls | None | Yes (daemon) | JSON line protocol |
-| Child process `--std-out` | Extension controls | Need to manage | No (cold index) | stdout parse |
+| Approach                  | Editor spawning    | Process mgmt   | Shared index    | Protocol complexity     |
+| ------------------------- | ------------------ | -------------- | --------------- | ----------------------- |
+| CLI child process         | Via `$EDITOR`      | Need to manage | Yes (daemon)    | CLI args + stdout parse |
+| Direct socket             | Extension controls | None           | Yes (daemon)    | JSON line protocol      |
+| Child process `--std-out` | Extension controls | Need to manage | No (cold index) | stdout parse            |
 
 Direct socket wins on simplicity, shared index reuse, and IDE-native file opening.

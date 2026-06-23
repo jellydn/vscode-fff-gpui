@@ -13,11 +13,11 @@ The extension needs to read its `fff-gpui.socketPath` setting from VS Code confi
 We initially tried to use the same pattern:
 
 ```typescript
-import { defineConfigObject, ref } from 'reactive-vscode'
+import { defineConfigObject, ref } from "reactive-vscode";
 
-const config = defineConfigObject('fff-gpui', {
-  socketPath: ref(''),
-})
+const config = defineConfigObject("fff-gpui", {
+  socketPath: ref(""),
+});
 ```
 
 However, `defineConfigObject` produces a `ConfigObject<object>` type, and TypeScript couldn't infer the property names. Accessing `config.socketPath.value` produced a type error:
@@ -33,10 +33,10 @@ Property 'socketPath' does not exist on type 'ConfigObject<object>'
 The simple utility function is:
 
 ```typescript
-import * as vscode from 'vscode'
+import * as vscode from "vscode";
 
 export function getSocketPath(): string {
-  return vscode.workspace.getConfiguration('fff-gpui').get<string>('socketPath', '')
+  return vscode.workspace.getConfiguration("fff-gpui").get<string>("socketPath", "");
 }
 ```
 
@@ -44,9 +44,9 @@ Called inline in the command handlers when needed:
 
 ```typescript
 const response = await sendCommand(
-  { cmd: 'open_path', path: workspaceRoot, in_grep: false },
+  { cmd: "open_path", path: workspaceRoot, in_grep: false },
   getSocketPath() || undefined,
-)
+);
 ```
 
 ## Consequences
@@ -66,9 +66,9 @@ const response = await sendCommand(
 
 ### Comparison
 
-| Approach | Type safety | Reactivity | Lines of code |
-|----------|------------|------------|--------------|
-| `defineConfigObject` + `ref` | Broken (type error) | Automatic | 4 |
-| `vscode.workspace.getConfiguration` | Works | Manual | 5 |
+| Approach                            | Type safety         | Reactivity | Lines of code |
+| ----------------------------------- | ------------------- | ---------- | ------------- |
+| `defineConfigObject` + `ref`        | Broken (type error) | Automatic  | 4             |
+| `vscode.workspace.getConfiguration` | Works               | Manual     | 5             |
 
 Given the type error, the plain API approach was the only viable option without deep investigation into reactive-vscode's type internals.

@@ -13,6 +13,7 @@ The user requested similar functionality to `vscode-fzf-picker` for finding file
 Unlike `vscode-fzf-picker` which executes `fzf` in an active VS Code terminal instance and can accept arbitrary file lists or query inputs, `vscode-fff-gpui` communicates with a resident `fff-gpui` daemon over a Unix socket using a fixed IPC protocol.
 
 The `fff-gpui` daemon's IPC protocol (`ServiceCommand`) only accepts:
+
 1. `OpenPath { path: PathBuf, in_grep: bool }` (opens picker in a directory path)
 2. `OpenOneShot { path: PathBuf, in_grep: bool }`
 3. Toggle/Config/Quit commands

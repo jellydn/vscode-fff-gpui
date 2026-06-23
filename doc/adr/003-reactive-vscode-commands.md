@@ -13,9 +13,9 @@ The VS Code extension API provides `vscode.commands.registerCommand()` for regis
 ```typescript
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
-    vscode.commands.registerCommand('fff-gpui.findFiles', findFiles),
-    vscode.commands.registerCommand('fff-gpui.grepFiles', grepFiles),
-  )
+    vscode.commands.registerCommand("fff-gpui.findFiles", findFiles),
+    vscode.commands.registerCommand("fff-gpui.grepFiles", grepFiles),
+  );
 }
 ```
 
@@ -23,9 +23,9 @@ Jellydn's extensions consistently use `reactive-vscode`'s `defineExtension` + `u
 
 ```typescript
 export const { activate, deactivate } = defineExtension(() => {
-  useCommand('fff-gpui.findFiles', findFiles)
-  useCommand('fff-gpui.grepFiles', grepFiles)
-})
+  useCommand("fff-gpui.findFiles", findFiles);
+  useCommand("fff-gpui.grepFiles", grepFiles);
+});
 ```
 
 We needed to decide whether to follow the standard VS Code pattern or Jellydn's reactive-vscode pattern.
@@ -54,9 +54,9 @@ We needed to decide whether to follow the standard VS Code pattern or Jellydn's 
 
 ### Comparison
 
-| Approach | Boilerplate | Auto-dispose | Convention match |
-|----------|------------|-------------|-----------------|
-| `vscode.commands.registerCommand` | More (subscriptions array) | Manual | VS Code standard |
-| `defineExtension` + `useCommand` | Less (single lines) | Automatic | Jellydn standard |
+| Approach                          | Boilerplate                | Auto-dispose | Convention match |
+| --------------------------------- | -------------------------- | ------------ | ---------------- |
+| `vscode.commands.registerCommand` | More (subscriptions array) | Manual       | VS Code standard |
+| `defineExtension` + `useCommand`  | Less (single lines)        | Automatic    | Jellydn standard |
 
 We chose convention alignment over standard VS Code patterns.
