@@ -62,14 +62,14 @@ The extension does not attempt to start the fff-gpui daemon if it's not running.
 
 ## Tech Debt Inventory
 
-| Severity | Item                                               | Location        |
-| -------- | -------------------------------------------------- | --------------- |
-| Low      | AGENTS.md "Known quirks" may contain stale entries | `AGENTS.md`     |
-| Low      | vitest-vite peer dependency coupling               | `package.json`  |
-| Medium   | Undocumented daemon protocol                       | `src/types.ts`  |
-| Medium   | No socket reconnection                             | `src/client.ts` |
-| Low      | macOS-only (inherited from fff-gpui)               | All             |
-| Low      | No progress indicator during IPC                   | `src/client.ts` |
+| Severity | Item                                               | Location           |
+| -------- | -------------------------------------------------- | ------------------ |
+| Low      | AGENTS.md "Known quirks" may contain stale entries | `AGENTS.md`        |
+| Low      | vitest-vite peer dependency coupling               | `package.json`     |
+| Medium   | Undocumented daemon protocol                       | `src/types.ts`     |
+| Medium   | No socket reconnection                             | `src/ipc.ts`       |
+| Low      | macOS-only (inherited from fff-gpui)               | All                |
+| Low      | No progress indicator during IPC                   | `src/runPicker.ts` |
 
 ## Security Posture
 

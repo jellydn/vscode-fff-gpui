@@ -8,14 +8,32 @@
 
 ## Test Files
 
-| File                    | Tests | Focus                                                                                       |
-| ----------------------- | ----- | ------------------------------------------------------------------------------------------- |
-| `test/client.test.ts`   | 25    | Socket IPC, response parsing, error handling, socket path resolution, security              |
-| `test/commands.test.ts` | 29    | Command handlers, search path resolution, file opening, cursor positioning, fault tolerance |
+| File                             | Tests | Focus                                                                                       |
+| -------------------------------- | ----- | ------------------------------------------------------------------------------------------- |
+| `test/ipc.test.ts`               | 8     | Raw Unix socket transport — connect, write, read, timeout, error                            |
+| `test/client.test.ts`            | 19    | Protocol client — sendCommand, response validation, socket path resolution, security        |
+| `test/commands.test.ts`          | 20    | Command handlers, search path resolution, file opening, cursor positioning, fault tolerance |
+| `test/resolveSearchPath.test.ts` | 6     | Pure path resolution cascade — Workspace Root → editor dir → homedir                        |
 
-**Total**: 54 tests across 2 files
+**Total**: 68 tests across 4 files
 
 ## Test Structure
+
+### test/ipc.test.ts
+
+- **Mocked modules**: `node:net`
+- **Test suite**: `sendSocketMessage`
+
+#### sendSocketMessage tests
+
+- Creates connection to correct socket path
+- Writes payload + newline on connect
+- Resolves with empty string when no data before end
+- Collects chunked data and returns trimmed result
+- Trims leading/trailing whitespace from response
+- Rejects with socket error on error event
+- Rejects with timeout error and verifies destroy()
+- Sets 60-second timeout on socket
 
 ### test/client.test.ts
 
@@ -84,6 +102,20 @@
 - Clamps line: 0 to index 0
 - Opens multiple files and shows all of them with correct cursor positions
 
+### test/resolveSearchPath.test.ts
+
+- **Mocked modules**: _none_ — pure function tests
+- **Test suite**: `resolveSearchTarget`
+
+#### resolveSearchTarget tests
+
+- Returns workspace folder when available
+- Falls back to active editor directory when no workspace folder
+- Falls back to homedir when no workspace and no active editor
+- Falls back to homedir when active editor has non-file scheme
+- Uses first workspace folder when multiple exist
+- Prefers workspace folder over active editor when both are available
+
 ## Mocking Pattern
 
 ### Hoisted State Pattern (used in commands.test.ts)
@@ -106,7 +138,7 @@ vi.mock('../src/client', () => ({
 
 This avoids the limitation of `vi.mock()` being hoisted above all imports — the hoisted state is available before the mock factory runs.
 
-### Direct vi.mock() (used in client.test.ts)
+### Direct vi.mock() (used in ipc.test.ts, client.test.ts)
 
 For simple mocks where state doesn't need mutation from tests:
 

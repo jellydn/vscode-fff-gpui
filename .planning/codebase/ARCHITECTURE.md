@@ -22,26 +22,26 @@ vscode-fff-gpui is a thin bridge between VS Code and the fff-gpui native picker 
            │              │
            └──────┬───────┘
                   │
-          ┌───────▼───────┐
-          │   runPicker   │  ← Shared picker runner
-          │  (resolve     │
-          │   path,       │
-          │   statusTip,  │
-          │   catch)      │
-          └───────┬───────┘
+          ┌───────▼───────────┐
+          │    runPicker      │  ← Shared picker orchestration
+          │  (resolve path,   │
+          │   statusTip,      │
+          │   catch)          │
+          └───────┬───────────┘
+                  │
+     ┌────────────┼────────────┐
+     │            │            │
+┌────▼─────┐ ┌───▼────────┐ ┌─▼──────────┐
+│resolve   │ │ sendCommand│ │ openFiles   │
+│SearchPath│ │ (client.ts)│ │ (openFiles) │
+│ pure fn  │ │ protocol   │ │ doc opener  │
+└──────────┘ └───┬────────┘ └─────────────┘
                   │
           ┌───────▼───────┐
-          │   sendCommand │  ← Unix socket IPC
-          │  (connect,    │     (client.ts)
-          │   write JSON, │
-          │   read+parse) │
-          └───────┬───────┘
-                  │
-          ┌───────▼───────┐
-          │   openFiles   │  ← Document opener
-          │  (load docs,  │     (openFiles.ts)
-          │   show docs,  │
-          │   position)   │
+          │ sendSocketMsg │  ← Raw Unix socket
+          │   (ipc.ts)    │     transport
+          │ connect,write │
+          │ read,timeout  │
           └───────────────┘
 ```
 
@@ -62,22 +62,39 @@ vscode-fff-gpui is a thin bridge between VS Code and the fff-gpui native picker 
 - `findFiles`: `inGrep: false`, status tip for globs/git patterns
 - `grepFiles`: `inGrep: true`, status tip for search patterns
 
-### 3. Shared Picker Runner (`src/commands/runPicker.ts`)
+### 3. Shared Picker Orchestration (`src/commands/runPicker.ts`)
 
-- Resolves search path: workspace root → active editor directory → home directory
+- Delegates Workspace Root resolution to `resolveSearchPath.ts`
 - Shows a status bar hint (8s timeout) with contextual tips
 - Calls `sendCommand()` with the resolved path and grep flag
 - Passes results to `openFiles()`
 - Catches and displays errors via `vscode.window.showErrorMessage`
 
-### 4. Unix Socket Client (`src/client.ts`)
+### 3a. Path Resolution (`src/commands/resolveSearchPath.ts`)
 
-- `sendCommand()` — connects to daemon socket, sends JSON, reads response
+- `resolveSearchTarget()` — pure function: workspace root → active editor directory → home directory
+- Interface: `(SearchContext) → string` — accepts POJOs, no VS Code API dependencies
+- Tested independently with plain objects — no mocks, no spies
+
+### 4. Protocol Client (`src/client.ts`)
+
+- `sendCommand()` — serializes command, calls transport, validates response
 - `resolveSocketPath()` — expands `~`, `${workspaceFolder}`, relative paths
 - `verifySocketSecurity()` — owner check + world-writable check
-- `isPickResponse()` — type guard validating daemon response shape
-- `isPickEntry()` — type guard validating individual entry shape
-- Error taxonomy: ENOENT/ECONNREFUSED (daemon not running), invalid JSON (parse error), invalid shape (validation error), timeout (60s)
+- Delegates raw socket communication to `src/ipc.ts`
+- Error taxonomy: ENOENT/ECONNREFUSED (daemon not running), invalid JSON (parse error with truncation), invalid shape (validation error), timeout (60s)
+
+### 4a. Socket Transport (`src/ipc.ts`)
+
+- `sendSocketMessage(socketPath, payload)` — pure transport: connect, write, read chunks, timeout
+- Single-export module with a 1-function interface
+- No awareness of the daemon protocol — just raw payload in, raw response out
+
+### 4b. Protocol Types + Guards (`src/types.ts`)
+
+- `ServiceCommand`, `PickEntry`, `PickResponse` — compile-time interfaces
+- `isPickEntry()`, `isPickResponse()` — runtime type guards (colocated with types)
+- Schema changes touch one file — no type/validator drift
 
 ### 5. Document Opener (`src/commands/openFiles.ts`)
 
@@ -107,15 +124,19 @@ User presses Cmd+K Cmd+P
   → VS Code invokes fff-gpui.findFiles
     → useCommand handler calls findFiles()
       → runPicker({ inGrep: false, statusTip: "..." })
-        → resolve search path (workspace folder)
+        → resolveSearchTarget({ workspaceFolders, activeEditor, homedir })
+          → returns resolved Workspace Root
         → show status bar hint
-        → sendCommand({ cmd: "open_path", path: "/workspace", in_grep: false })
+        → sendCommand({ cmd: "open_path", path: workspaceRoot, in_grep: false })
           → resolveSocketPath()
           → verifySocketSecurity()
-          → net.createConnection(socketPath)
-          → socket.write(JSON)
-          → read response data
-          → socket.end → parse JSON → isPickResponse() validation
+          → sendSocketMessage(socketPath, JSON.stringify(command))
+            → net.createConnection(socketPath)
+            → socket.write(payload + "\n")
+            → read response chunks
+            → socket.end → return raw string
+          → JSON.parse(raw)
+          → isPickResponse() validation
           → return PickResponse { paths: [{path, line?, column?}, ...] }
         → openFiles(response.paths)
           → Promise.allSettled(openTextDocument) over all entries
@@ -135,4 +156,6 @@ Identical to find files, except `inGrep: true` and different status tip.
 3. **reactive-vscode for commands** (ADR 003) — Matches Jellydn extension conventions
 4. **KISS: 2 commands, 1 config** — Daemon handles everything natively; extension is just a bridge
 5. **Fault-tolerant loading** — `Promise.allSettled` throughout; no single bad path breaks the batch
-6. **PickResponse validation** — Type guards reject malformed daemon responses before they reach file opening
+6. **PickResponse validation** — Type guards colocated with types; compile-time + runtime enforcement
+7. **Transport/protocol separation** — `ipc.ts` (raw socket) + `client.ts` (protocol) are independent seams
+8. **Path resolution as pure function** — `resolveSearchTarget()`: POJOs in, string out; tested without mocks
