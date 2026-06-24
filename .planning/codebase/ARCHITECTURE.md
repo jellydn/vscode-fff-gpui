@@ -53,7 +53,8 @@ vscode-fff-gpui is a thin bridge between VS Code and the fff-gpui native picker 
 - Registers 2 commands: `fff-gpui.findFiles` and `fff-gpui.grepFiles`
 - Activates on command invocation (not on startup)
 - Logs activation/deactivation to the fff-gpui output channel
-- Cleanup: disposes the output channel logger on deactivation
+- Status bar: creates a left-aligned `fff-gpui` button that opens the file picker on click
+- Cleanup: disposes the status bar item and output channel logger on deactivation
 
 ### 2. Command Handlers (`src/commands/findFiles.ts`, `src/commands/grepFiles.ts`)
 

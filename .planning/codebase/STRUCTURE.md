@@ -23,7 +23,10 @@ vscode-fff-gpui/
 │   ├── client.test.ts          # Protocol client + socket path tests (19 tests)
 │   ├── ipc.test.ts             # Raw socket transport tests (8 tests)
 │   ├── commands.test.ts        # Command handler + openFiles tests (20 tests)
-│   └── resolveSearchPath.test.ts # Path resolution pure function tests (6 tests)
+│   ├── resolveSearchPath.test.ts # Path resolution pure function tests (6 tests)
+│   ├── types.test.ts           # Type guard validation tests (23 tests)
+│   ├── logger.test.ts          # Output channel logger tests (6 tests)
+│   └── config.test.ts          # Config reader tests (4 tests)
 ├── doc/
 │   └── adr/
 │       ├── 001-unix-socket-ipc.md
@@ -71,6 +74,9 @@ vscode-fff-gpui/
 | Protocol client tests             | `test/client.test.ts`                                                        |
 | Command + open tests              | `test/commands.test.ts`                                                      |
 | Path resolution tests             | `test/resolveSearchPath.test.ts`                                             |
+| Type guard tests                  | `test/types.test.ts`                                                         |
+| Logger tests                      | `test/logger.test.ts`                                                        |
+| Config tests                      | `test/config.test.ts`                                                        |
 | Architecture decisions            | `doc/adr/`                                                                   |
 | CI pipeline                       | `.github/workflows/ci.yml`                                                   |
 | Publish pipeline                  | `.github/workflows/publish.yml`                                              |

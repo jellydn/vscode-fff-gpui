@@ -6,7 +6,14 @@ All notable changes to the "vscode-fff-gpui" extension will be documented in thi
 
 ### Added
 
+- **Status bar button** — clickable `fff-gpui` icon in the status bar for quick file picker access
 - **Show your support section** in README with Ko-fi, PayPal, Buy Me A Coffee badges
+
+### Improved
+
+- **Test coverage** — added `test/logger.test.ts` (6 tests) and `test/config.test.ts` (4 tests), bringing the suite to 100 tests across 7 test files
+- **Logging consistency** — extracted `disposeLogger()` for clean output channel lifecycle in extension deactivation
+- **Config API** — `getSocketPath()` uses plain `vscode.workspace.getConfiguration()` following ADR 002
 
 ### Fixed
 
