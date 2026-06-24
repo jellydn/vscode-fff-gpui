@@ -35,7 +35,7 @@ describe('log', () => {
 
     expect(appendLineMock).toHaveBeenCalledTimes(1)
     const callArg = appendLineMock.mock.calls[0]?.[0] as string
-    expect(callArg).toMatch(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z\] some message$/)
+    expect(callArg).toMatch(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] some message$/)
   })
 
   it('reuses the existing channel on subsequent calls', () => {

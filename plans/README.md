@@ -7,7 +7,7 @@ Based on commit: `96c2c33`
 
 ## Recommended execution order
 
-```
+```text
 001 ──> 002 ──> 003
 ```
 
