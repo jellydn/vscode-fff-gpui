@@ -11,14 +11,14 @@
 | File                             | Tests | Focus                                                                                       |
 | -------------------------------- | ----- | ------------------------------------------------------------------------------------------- |
 | `test/ipc.test.ts`               | 8     | Raw Unix socket transport — connect, write, read, timeout, error                            |
-| `test/client.test.ts`            | 19    | Protocol client — sendCommand, response validation, socket path resolution, security        |
-| `test/commands.test.ts`          | 20    | Command handlers, search path resolution, file opening, cursor positioning, fault tolerance |
+| `test/client.test.ts`            | 28    | Protocol client — sendCommand, response validation, socket path resolution, security        |
+| `test/commands.test.ts`          | 26    | Command handlers, search path resolution, file opening, cursor positioning, fault tolerance |
 | `test/resolveSearchPath.test.ts` | 6     | Pure path resolution cascade — Workspace Root → editor dir → homedir                        |
 | `test/types.test.ts`             | 23    | Pure type guard validation — `isPickEntry` (12), `isPickResponse` (11), zero mocks          |
+| `test/logger.test.ts`            | 6     | Output channel logger — creation, timestamping, reuse, dispose lifecycle                    |
+| `test/config.test.ts`            | 4     | Config reader — socket path retrieval, empty/null handling                                  |
 
-| `test/types.test.ts` | 23 | Pure type guard validation — `isPickEntry` (12), `isPickResponse` (11), zero mocks |
-
-**Total**: 91 tests across 5 files
+**Total**: 101 tests across 7 files
 
 ## Test Structure
 
@@ -139,6 +139,37 @@
 - Returns false when paths is missing, null, or not an array
 - Returns true for empty paths array, single valid entry, multiple valid entries
 - Returns false when any entry is invalid: non-string path, missing path, non-numeric line
+
+### test/logger.test.ts
+
+- **Mocked modules**: `vscode`
+- **Test suites**: `log`, `disposeLogger`
+- **Uses vi.hoisted** for mock state before `vi.mock('vscode')`
+
+#### log tests
+
+- Creates the output channel with name "fff-gpui" on first call
+- Appends ISO-timestamped messages to the channel
+- Reuses the existing channel on subsequent calls
+- Appends to channel on each call (multiple invocations)
+
+#### disposeLogger tests
+
+- Disposes the output channel and clears the reference
+- Creates a new channel on next log call after dispose
+
+### test/config.test.ts
+
+- **Mocked modules**: `vscode`
+- **Test suite**: `getSocketPath`
+- **Uses vi.hoisted** for mock state before `vi.mock('vscode')`
+
+#### getSocketPath tests
+
+- Calls `getConfiguration` with the correct section name (`fff-gpui`)
+- Returns the configured socket path string when set
+- Returns `undefined` when setting is empty string (default)
+- Returns `undefined` when `get()` returns null
 
 ## Mocking Pattern
 

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { log } from '../logger'
 import type { PickEntry } from '../types'
 
 export async function openFiles(entries: PickEntry[]): Promise<void> {
@@ -48,7 +49,7 @@ export async function openFiles(entries: PickEntry[]): Promise<void> {
 
   for (const result of showResults) {
     if (result.status === 'rejected') {
-      console.warn('fff-gpui: failed to show document:', result.reason)
+      log(`failed to show document: ${result.reason}`)
     }
   }
 }

@@ -9,6 +9,7 @@ const {
   showWarningMessageMock,
   showTextDocumentMock,
   openTextDocumentMock,
+  createOutputChannelMock,
   mockState,
 } = vi.hoisted(() => ({
   sendCommandMock: vi.fn(),
@@ -17,6 +18,7 @@ const {
   showWarningMessageMock: vi.fn(),
   showTextDocumentMock: vi.fn(),
   openTextDocumentMock: vi.fn(),
+  createOutputChannelMock: vi.fn(),
   mockState: {
     workspaceFolders: undefined as readonly { uri: { fsPath: string } }[] | undefined,
     activeTextEditor: undefined as
@@ -36,6 +38,10 @@ vi.mock('../src/client', () => ({
 
 vi.mock('../src/config', () => ({
   getSocketPath: getSocketPathMock,
+}))
+
+vi.mock('../src/logger', () => ({
+  log: vi.fn(),
 }))
 
 vi.mock('node:os', () => ({
@@ -75,6 +81,7 @@ vi.mock('vscode', () => {
       showWarningMessage: showWarningMessageMock,
       showTextDocument: showTextDocumentMock,
       setStatusBarMessage: vi.fn(),
+      createOutputChannel: createOutputChannelMock,
     },
     Uri: {
       file: (p: string) => ({
@@ -109,7 +116,7 @@ describe('findFiles', () => {
     vi.clearAllMocks()
     mockState.workspaceFolders = undefined
     mockState.activeTextEditor = undefined
-    getSocketPathMock.mockReturnValue('')
+    getSocketPathMock.mockReturnValue(undefined)
     sendCommandMock.mockResolvedValue({ paths: [] })
   })
 
@@ -197,9 +204,9 @@ describe('findFiles', () => {
       )
     })
 
-    it('passes undefined when config returns empty string', async () => {
+    it('passes undefined when config returns no socket path', async () => {
       mockState.workspaceFolders = [makeWorkspaceFolder('/ws')]
-      getSocketPathMock.mockReturnValue('')
+      getSocketPathMock.mockReturnValue(undefined)
 
       await findFiles()
 
@@ -268,7 +275,7 @@ describe('grepFiles', () => {
     vi.clearAllMocks()
     mockState.workspaceFolders = undefined
     mockState.activeTextEditor = undefined
-    getSocketPathMock.mockReturnValue('')
+    getSocketPathMock.mockReturnValue(undefined)
     sendCommandMock.mockResolvedValue({ paths: [] })
   })
 
@@ -339,11 +346,8 @@ describe('grepFiles', () => {
 })
 
 describe('openFiles', () => {
-  let consoleWarnSpy: ReturnType<typeof vi.spyOn>
-
   beforeEach(() => {
     vi.clearAllMocks()
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     openTextDocumentMock.mockImplementation(async (uri: { fsPath: string }) => ({
       uri,
       fileName: uri.fsPath,
@@ -478,11 +482,9 @@ describe('openFiles', () => {
 
     await expect(openFiles(entries)).resolves.toBeUndefined()
     expect(showTextDocumentMock).toHaveBeenCalledTimes(3)
-    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'fff-gpui: failed to show document:',
-      editorClosedError,
-    )
+
+    const { log } = await import('../src/logger')
+    expect(log).toHaveBeenCalledWith('failed to show document: Error: Editor closed')
   })
 
   it('clamps line: 0 to index 0', async () => {

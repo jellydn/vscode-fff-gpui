@@ -36,7 +36,7 @@ Always run in order: `lint → typecheck → test` before building/releasing.
 
 ## Architecture
 
-- `src/extension.ts` — entrypoint. Registers two commands: `findFiles`, `grepFiles`.
+- `src/extension.ts` — entrypoint. Registers two commands: `findFiles`, `grepFiles`. Shows a status bar button for quick file picker access.
 - `src/config.ts` — reads `fff-gpui.socketPath` VS Code setting.
 - `src/ipc.ts` — `sendSocketMessage(socketPath, payload)` — raw Unix socket transport (connect, write, read chunks, 60s timeout). Single-export module, no protocol awareness.
 - `src/client.ts` — `sendCommand()` is the protocol adapter: serializes `ServiceCommand`, calls `sendSocketMessage`, parses JSON, validates with `isPickResponse`. Also exports `resolveSocketPath()` (supports `${workspaceFolder}`, `~`, relative, absolute paths) and `verifySocketSecurity()` (owner check + world-writable check).
@@ -49,9 +49,11 @@ Always run in order: `lint → typecheck → test` before building/releasing.
 
 Keybindings: `cmd+k cmd+p` (find), `cmd+k cmd+f` (grep)
 
+Status bar: a `fff-gpui` button (left-aligned) opens the file picker on click.
+
 ## Testing
 
-- Test files: `test/ipc.test.ts` (socket transport), `test/client.test.ts` (protocol client + security), `test/commands.test.ts` (find, grep, open), `test/resolveSearchPath.test.ts` (path resolution), `test/types.test.ts` (type guards). 91 tests total.
+- Test files: `test/ipc.test.ts` (socket transport), `test/client.test.ts` (protocol client + security), `test/commands.test.ts` (find, grep, open), `test/resolveSearchPath.test.ts` (path resolution), `test/types.test.ts` (type guards), `test/logger.test.ts` (output channel), `test/config.test.ts` (config reader). 101 tests across 7 test files.
 - Mocks `node:net` globally via `vi.mock('node:net')` (ipc.test.ts, client.test.ts). `resolveSearchPath.test.ts` and `types.test.ts` use zero-mock pure function tests.
 - Tests: socket transport (connect/write/read/timeout), protocol client (sendCommand, JSON parsing, PickResponse validation, error taxonomy), socket path resolution, security verification, search path resolution (workspace → editor → homedir cascade), type guard validation (isPickEntry/isPickResponse), file opening (cursor positioning, partial failure, fault tolerance).
 - Runs in `node` environment (vitest.config.ts)

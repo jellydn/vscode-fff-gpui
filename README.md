@@ -46,6 +46,7 @@ Once the daemon is running, open a project in VS Code and use:
 
 - **Cmd+K Cmd+P** — Find files (type `**/*.ts` to filter by type, `git:modified` for changed files)
 - **Cmd+K Cmd+F** — Grep file contents (type `TODO` to find TODOs)
+- **Status bar button** — Click the `fff-gpui` icon in the status bar to open the file picker
 
 Or open the Command Palette (`Cmd+Shift+P`) and run:
 
