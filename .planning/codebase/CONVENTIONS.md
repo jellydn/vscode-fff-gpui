@@ -31,7 +31,7 @@
 
 - `ENOENT` → `"socket file does not exist"`
 - `ECONNREFUSED` → `"daemon is not listening"`
-- Both wrap into: `"fff-gpui daemon is not running (<detail>). Install with: brew install fff-gpui && brew services start fff-gpui"`
+- Both wrap into: `"fff-gpui daemon is not running (<detail>). Start it with: fff-gpui daemon install (older fff-gpui: brew services start fff-gpui)"`
 - Timeout: `"Connection timed out while waiting for file selection"`
 
 ### Parse errors (`src/client.ts`)

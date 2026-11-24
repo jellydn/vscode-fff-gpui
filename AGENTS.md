@@ -4,7 +4,7 @@
 
 VS Code extension that delegates file finding/grep to the native `fff-gpui` TUI picker daemon via Unix socket. Uses `reactive-vscode` for the VS Code extension lifecycle.
 
-User installs `fff-gpui` separately: `brew install fff-gpui && brew services start fff-gpui`
+User installs `fff-gpui` separately: `brew install fff-gpui && fff-gpui daemon install` (older fff-gpui versions: `brew services start fff-gpui`)
 
 ## Commands
 
