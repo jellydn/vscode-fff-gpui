@@ -78,7 +78,7 @@ export async function sendCommand(
       const fileExists = fs.existsSync(socketPath)
       const detail = fileExists ? 'daemon is not listening' : 'socket file does not exist'
       throw new Error(
-        `fff-gpui daemon is not running (${detail}). Install with: brew install fff-gpui && brew services start fff-gpui`,
+        `fff-gpui daemon is not running (${detail}). Start it with: fff-gpui daemon install (older fff-gpui: brew services start fff-gpui)`,
       )
     }
     throw err

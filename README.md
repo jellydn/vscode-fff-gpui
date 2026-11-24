@@ -35,8 +35,12 @@ fff-gpui must be installed and running as a background daemon.
 # Install via Homebrew (macOS)
 brew tap th0jensen/fff-gpui
 brew install fff-gpui
-brew services start fff-gpui
+fff-gpui daemon install
 ```
+
+`fff-gpui daemon install` installs a launchd LaunchAgent that starts the daemon at
+login and on the first socket request. On older fff-gpui versions without the
+`daemon` command, use `brew services start fff-gpui` instead.
 
 > **Note:** fff-gpui is currently macOS-only (Apple Silicon and Intel).
 
@@ -110,17 +114,20 @@ This is KISS: the extension is a thin bridge between VS Code and the daemon. The
 
 ### "fff-gpui daemon is not running"
 
-Make sure the background service is active:
+Check whether the daemon is installed and running:
 
 ```bash
-brew services list | grep fff-gpui
+fff-gpui daemon status
 ```
 
-If it's stopped, start it:
+If it is not installed, install it:
 
 ```bash
-brew services start fff-gpui
+fff-gpui daemon install
 ```
+
+On older fff-gpui versions without the `daemon` command, use
+`brew services list | grep fff-gpui` and `brew services start fff-gpui`.
 
 ### Check the extension logs
 

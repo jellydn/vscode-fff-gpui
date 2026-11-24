@@ -2,6 +2,12 @@
 
 All notable changes to the "vscode-fff-gpui" extension will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Daemon setup hint** — the "daemon is not running" error and the README now recommend `fff-gpui daemon install` ([th0jensen/fff-gpui#27](https://github.com/th0jensen/fff-gpui/pull/27)) and keep `brew services start fff-gpui` for older fff-gpui versions
+
 ## [0.2.3] — 2026-06-23
 
 ### Added
